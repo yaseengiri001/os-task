@@ -1,0 +1,13 @@
+# Compiled binaries / build artifacts
+threads_demo
+*.o
+*.out
+*.exe
+*.dSYM/
+a.out
+
+# macOS
+.DS_Store
+
+# The confidential assignment brief must NOT be committed / posted online
+*.pdf
