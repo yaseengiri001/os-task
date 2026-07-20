@@ -1,0 +1,23 @@
+$ cd part2_synchronization && make run
+
+=== (A) Race condition demo ===
+Each of 4 threads increments a shared counter 1000000 times.
+Expected final value = 4000000
+
+WITHOUT mutex : 1168311    <-- WRONG: updates were lost to the race
+WITH mutex    : 4000000    <-- correct, every increment counted
+
+=== (B) Counting semaphore demo (max 2 threads at a time) ===
+  thread 1 entered  (active now = 1)
+  thread 2 entered  (active now = 2)
+  thread 1 leaving  (active now = 2)
+  thread 2 leaving  (active now = 1)
+  thread 3 entered  (active now = 1)
+  thread 4 entered  (active now = 2)
+  thread 4 leaving  (active now = 2)
+  thread 3 leaving  (active now = 1)
+  thread 5 entered  (active now = 1)
+  thread 6 entered  (active now = 2)
+  thread 5 leaving  (active now = 2)
+  thread 6 leaving  (active now = 1)
+Peak concurrent threads in the region = 2 (limit was 2)

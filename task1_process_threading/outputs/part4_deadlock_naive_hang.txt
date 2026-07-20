@@ -1,0 +1,7 @@
+$ ./deadlock naive     # expected to HANG - killed after 5s to prove it
+
+WARNING: the NAIVE version locks in opposite order and will
+almost certainly DEADLOCK (hang). Press Ctrl-C to stop.
+
+
+[still running after 5 seconds -> DEADLOCKED. Process killed with SIGKILL.]

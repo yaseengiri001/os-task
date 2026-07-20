@@ -1,0 +1,39 @@
+$ ./task1_combined   (interactive menu, options 1 then 0)
+
+
+=============================================================
+ ST5004CEM Task 1 - Process Management and Threading
+=============================================================
+  1. Thread creation and concurrent execution   [req 1.1(1)]
+  2. Race condition, mutex and semaphore        [req 1.1(2)]
+  3. Round-robin scheduler simulation           [req 1.1(3)]
+  4. Deadlock prevention (two strategies)       [req 1.1(4)]
+  5. Deadlock demonstration - WILL HANG on purpose
+  6. Run demos 1-4 back to back
+  0. Quit
+-------------------------------------------------------------
+Choice: 
+=== DEMO 1: Thread creation and concurrent execution ===
+Creating 3 threads to sum 1..3000 between them.
+
+  [Thread 1] started  -> summing 1..1000
+  [Thread 1] finished -> partial sum = 500500
+  [Thread 2] started  -> summing 1001..2000
+  [Thread 2] finished -> partial sum = 1500500
+  [Thread 3] started  -> summing 2001..3000
+  [Thread 3] finished -> partial sum = 2500500
+
+  Combined total = 4501500   (expected 4501500) OK
+
+=============================================================
+ ST5004CEM Task 1 - Process Management and Threading
+=============================================================
+  1. Thread creation and concurrent execution   [req 1.1(1)]
+  2. Race condition, mutex and semaphore        [req 1.1(2)]
+  3. Round-robin scheduler simulation           [req 1.1(3)]
+  4. Deadlock prevention (two strategies)       [req 1.1(4)]
+  5. Deadlock demonstration - WILL HANG on purpose
+  6. Run demos 1-4 back to back
+  0. Quit
+-------------------------------------------------------------
+Choice: Goodbye.

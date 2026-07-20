@@ -1,5 +1,13 @@
 # Compiled binaries / build artifacts
-threads_demo
+# C executables have no extension, so each one is listed by its full path.
+# (A bare name like "task1_combined" would also ignore the FOLDER of that name,
+#  so the paths are anchored to the file that the Makefile actually produces.)
+# Task 1
+task1_process_threading/part1_threads/threads_demo
+task1_process_threading/part2_synchronization/sync_demo
+task1_process_threading/part3_round_robin/round_robin
+task1_process_threading/part4_deadlock/deadlock
+task1_process_threading/task1_combined/task1_combined
 *.o
 *.out
 *.exe

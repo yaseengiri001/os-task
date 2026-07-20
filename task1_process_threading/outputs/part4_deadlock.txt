@@ -1,0 +1,16 @@
+$ cd part4_deadlock && make run
+
+Deadlock prevention: two threads make OPPOSITE transfers between
+two locked accounts - the classic deadlock trigger.
+
+[Prevention 1] Lock ordering (lock lower account id first):
+  finished - no deadlock.
+  balances: acct0=1000  acct1=1000  total=2000 (started at 2000)
+
+[Prevention 2] Trylock + backoff (never wait holding a lock):
+  finished - no deadlock.
+  balances: acct0=1000  acct1=1000  total=2000 (started at 2000)
+  trylock backoffs handled: 6294
+
+Both preventions kept the books correct AND never deadlocked.
+Try './deadlock naive' to watch the unsafe version hang.

@@ -1,0 +1,70 @@
+$ ./task1_combined all
+
+
+=== DEMO 1: Thread creation and concurrent execution ===
+Creating 3 threads to sum 1..3000 between them.
+
+  [Thread 1] started  -> summing 1..1000
+  [Thread 1] finished -> partial sum = 500500
+  [Thread 2] started  -> summing 1001..2000
+  [Thread 2] finished -> partial sum = 1500500
+  [Thread 3] started  -> summing 2001..3000
+  [Thread 3] finished -> partial sum = 2500500
+
+  Combined total = 4501500   (expected 4501500) OK
+
+=== DEMO 2: Race condition, mutex and counting semaphore ===
+(A) 4 threads each increment one shared counter 1000000 times.
+    Expected final value = 4000000
+
+    WITHOUT mutex : 1046018    <-- WRONG: updates lost to the race
+    WITH mutex    : 4000000    <-- correct, every increment counted
+
+(B) Counting semaphore: at most 2 of 6 threads inside at once.
+    thread 1 entered  (active now = 1)
+    thread 2 entered  (active now = 2)
+    thread 1 leaving  (active now = 2)
+    thread 2 leaving  (active now = 1)
+    thread 3 entered  (active now = 1)
+    thread 4 entered  (active now = 2)
+    thread 3 leaving  (active now = 2)
+    thread 4 leaving  (active now = 1)
+    thread 5 entered  (active now = 1)
+    thread 6 entered  (active now = 2)
+    thread 5 leaving  (active now = 2)
+    thread 6 leaving  (active now = 1)
+    Peak concurrent threads in the region = 2 (limit was 2) OK
+
+=== DEMO 3: Round-robin scheduler simulation (quantum = 2) ===
+
+Gantt chart:
+ | P1 | P2 | P3 | P1 | P4 | P2 | P3 | P1 | P3 |
+ 0    2    4    6    8    9    10   12   13   15
+
+PID  Arrival  Burst  Completion  Turnaround  Waiting
+---  -------  -----  ----------  ----------  -------
+P1        0      5         13          13        8
+P2        1      3         10           9        6
+P3        2      6         15          13        7
+P4        3      1          9           6        5
+
+Average turnaround time = 10.25
+Average waiting time    = 6.50
+
+=== DEMO 4: Deadlock demonstration and prevention ===
+Two threads make OPPOSITE transfers between two locked accounts -
+the classic deadlock trigger.
+
+  [Prevention 1] Lock ordering (lock lower account id first):
+    finished - no deadlock.
+    balances: acct0=1000  acct1=1000  total=2000 (started at 2000)
+
+  [Prevention 2] Trylock + backoff (never wait holding a lock):
+    finished - no deadlock.
+    balances: acct0=1000  acct1=1000  total=2000 (started at 2000)
+    trylock backoffs handled: 57644
+
+  Both preventions kept the books correct AND never deadlocked.
+  Menu option 5 runs the UNSAFE version, which hangs on purpose.
+
+All four demonstrations completed successfully.

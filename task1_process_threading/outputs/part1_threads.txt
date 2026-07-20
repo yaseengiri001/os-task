@@ -1,0 +1,11 @@
+$ cd part1_threads && make run
+
+Main: creating 3 worker threads...
+[Thread 1] started  -> summing 1..1000
+[Thread 1] finished -> partial sum = 500500
+[Thread 2] started  -> summing 1001..2000
+[Thread 2] finished -> partial sum = 1500500
+[Thread 3] started  -> summing 2001..3000
+[Thread 3] finished -> partial sum = 2500500
+Main: all threads joined. Total sum 1..3000 = 4501500
+Check: expected             = 4501500

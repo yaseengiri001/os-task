@@ -8,17 +8,15 @@
 
 Task 1 was built as four small, independent parts — thread creation,
 synchronization, scheduling, and deadlock — before being combined. Each part
-lives in its own folder with its own `Makefile` and compiles and runs on its
-own. This isolates a single concept per part, which makes each one easy to test,
-explain, and mark, and it mirrors how the requirements are written.
+lives in its own folder with its own `Makefile` and runs on its own, isolating a
+single concept per part and mirroring how the requirements are written.
 
 ## Language and portability
 
-The tasks are implemented in **C** with the **POSIX threads (pthreads)**
-library. C was chosen because this is an operating-systems module and pthreads
-map directly onto the OS threading primitives being studied. Everything targets
-a POSIX system (developed and tested on macOS with `cc`/clang) and is compiled
-with `-Wall -Wextra -std=c11` so the compiler flags questionable code.
+Implemented in **C** with **POSIX threads (pthreads)**, because pthreads map
+directly onto the OS primitives this module studies. Everything targets a POSIX
+system (tested on macOS with `cc`/clang) and compiles with `-Wall -Wextra
+-std=c11`.
 
 ## Part 1 — Thread creation
 
@@ -65,11 +63,27 @@ opt-in "naive" version that genuinely deadlocks is included to demonstrate the
 failure, guarded behind a command-line argument so the default run always
 terminates.
 
+## The combined program
+
+`task1_combined/` integrates all four parts into the single application the
+brief asks for, behind a menu so a reader can jump straight to one requirement.
+The one design problem the combined build introduces that the standalone parts
+never had is **state**: a standalone `main` runs once and exits, so leftover
+globals do not matter, whereas here any demo may be run repeatedly in any order.
+Each demo therefore resets its own state on entry — counter zeroed, balances
+restored, ready queue emptied — and the account mutexes are initialised exactly
+once behind a flag. The unsafe deadlock sits on its own menu entry and is
+excluded from "run all", because it never returns by design. A command-line mode
+(`./task1_combined all`) runs everything without input, which is how the logs in
+`outputs/` were captured.
+
 ## Testing and limitations
 
-Every part compiles with no warnings and was executed to confirm behaviour: the
-race, the scheduler metrics, and the deadlock were all verified (the naive
-deadlock was confirmed with a watchdog timeout). Known limitations: the
+Every part compiles with no warnings and was executed to confirm behaviour, with
+the real logs captured in `outputs/`. The race lost 2,831,689 of 4,000,000
+increments (≈71%) in the recorded run; the mutex version was exact. The naive
+deadlock was confirmed with a watchdog — still alive after 5 seconds, then
+killed. Known limitations: the
 scheduler simplifies real systems (no I/O bursts, fixed quantum), and
 trylock+backoff could in theory livelock under adversarial timing, which is why
 `sched_yield()` is used on each retry.
