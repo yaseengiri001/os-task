@@ -51,5 +51,8 @@ a.out
 # macOS
 .DS_Store
 
-# The confidential assignment brief must NOT be committed / posted online
+# The confidential assignment brief must NOT be committed / posted online.
+# The rule is deliberately broad, with one explicit exception for the report
+# this repository produces - it is our own work, not the brief.
 *.pdf
+!docs/*.pdf
