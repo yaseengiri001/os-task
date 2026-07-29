@@ -1,5 +1,5 @@
 # Captured by tools/capture_outputs.sh
-# Date    : 2026-07-29T11:34:58Z (UTC)
+# Date    : 2026-07-29T11:41:22Z (UTC)
 # Host OS : Darwin 25.5.0 arm64
 # Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
 #
@@ -11,9 +11,9 @@ Creating 3 threads to sum 1..3000 between them.
   [Thread 1] started  -> summing 1..1000
   [Thread 1] finished -> partial sum = 500500
   [Thread 2] started  -> summing 1001..2000
-  [Thread 2] finished -> partial sum = 1500500
   [Thread 3] started  -> summing 2001..3000
   [Thread 3] finished -> partial sum = 2500500
+  [Thread 2] finished -> partial sum = 1500500
 
   Combined total = 4501500   (expected 4501500) OK
 
@@ -21,19 +21,19 @@ Creating 3 threads to sum 1..3000 between them.
 (A) 4 threads each increment one shared counter 1000000 times.
     Expected final value = 4000000
 
-    WITHOUT mutex : 1096657    <-- WRONG: updates lost to the race
+    WITHOUT mutex : 1020499    <-- WRONG: updates lost to the race
     WITH mutex    : 4000000    <-- correct, every increment counted
 
 (B) Counting semaphore: at most 2 of 6 threads inside at once.
     thread 1 entered  (active now = 1)
     thread 2 entered  (active now = 2)
-    thread 2 leaving  (active now = 2)
-    thread 3 entered  (active now = 2)
     thread 1 leaving  (active now = 2)
+    thread 2 leaving  (active now = 1)
+    thread 3 entered  (active now = 1)
     thread 4 entered  (active now = 2)
     thread 3 leaving  (active now = 2)
-    thread 5 entered  (active now = 2)
-    thread 4 leaving  (active now = 2)
+    thread 4 leaving  (active now = 1)
+    thread 5 entered  (active now = 1)
     thread 6 entered  (active now = 2)
     thread 5 leaving  (active now = 2)
     thread 6 leaving  (active now = 1)
@@ -66,7 +66,7 @@ the classic deadlock trigger.
   [Prevention 2] Trylock + backoff (never wait holding a lock):
     finished - no deadlock.
     balances: acct0=1000  acct1=1000  total=2000 (started at 2000)
-    trylock backoffs handled: 4609
+    trylock backoffs handled: 30538
 
   Both preventions kept the books correct AND never deadlocked.
   Menu option 5 runs the UNSAFE version, which hangs on purpose.

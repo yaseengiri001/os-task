@@ -29,16 +29,44 @@
  * -----------------------------------------------------------------------------
  */
 
+/*
+ * Request the POSIX.1-2008 interfaces before any header is included.
+ *
+ * Without this, glibc exposes only the ISO C subset under -std=c11 and hides
+ * pread/pwrite, pthread_rwlock_t and friends, so a strict Linux build fails
+ * with "implicit declaration". macOS happens to expose them anyway, which is
+ * exactly why this has to be tested on both - the omission is invisible on one
+ * platform and fatal on the other.
+ */
+#define _POSIX_C_SOURCE 200809L
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>  /* sem_open / sem_wait / sem_post (named semaphores)   */
 #include <fcntl.h>      /* O_CREAT                                             */
-#include <unistd.h>     /* usleep                                             */
+#include <unistd.h>
+#include <time.h>    /* nanosleep */     /* usleep                                             */
 
 #define NUM_THREADS 4
 #define ITERATIONS  1000000L   /* increments per thread */
 
+
+/*
+ * Sleep for `us` microseconds.
+ *
+ * nanosleep() rather than sleep_us(): usleep was declared obsolete in
+ * POSIX.1-2001 and REMOVED altogether in POSIX.1-2008, so a strict standards
+ * build does not declare it at all. nanosleep is its specified replacement.
+ */
+static void sleep_us(long us)
+{
+    struct timespec ts;
+    ts.tv_sec  = us / 1000000L;
+    ts.tv_nsec = (us % 1000000L) * 1000L;
+    nanosleep(&ts, NULL);
+}
 /* ======================= (A) RACE CONDITION + MUTEX ======================= */
 
 static long shared_counter = 0;
@@ -100,7 +128,7 @@ void *use_limited_resource(void *arg)
     printf("  thread %ld entered  (active now = %d)\n", id, active);
     pthread_mutex_unlock(&active_mutex);
 
-    usleep(100000);                        /* pretend to use it for 0.1s       */
+    sleep_us(100000);                        /* pretend to use it for 0.1s       */
 
     pthread_mutex_lock(&active_mutex);
     printf("  thread %ld leaving  (active now = %d)\n", id, active);

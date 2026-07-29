@@ -29,12 +29,25 @@
  * -----------------------------------------------------------------------------
  */
 
+/*
+ * Request the POSIX.1-2008 interfaces before any header is included.
+ *
+ * Without this, glibc exposes only the ISO C subset under -std=c11 and hides
+ * pread/pwrite, pthread_rwlock_t and friends, so a strict Linux build fails
+ * with "implicit declaration". macOS happens to expose them anyway, which is
+ * exactly why this has to be tested on both - the omission is invisible on one
+ * platform and fatal on the other.
+ */
+#define _POSIX_C_SOURCE 200809L
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>   /* va_list, used by say() */
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <signal.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -196,6 +209,17 @@ int main(int argc, char **argv)
        and appear out of order relative to the other process. A server log
        is only useful if it appears as events happen. */
     setvbuf(stdout, NULL, _IOLBF, 0);
+
+    /*
+     * Ignore SIGPIPE. Writing to a socket whose peer has already closed
+     * raises SIGPIPE, whose default action is to KILL the process - so a
+     * client that sends one more request after the server has hung up simply
+     * dies, with no chance to report why. Ignoring it turns the event into an
+     * ordinary EPIPE error from send(), which the existing error handling
+     * already deals with. Servers need this for the same reason; clients need
+     * it just as much.
+     */
+    signal(SIGPIPE, SIG_IGN);
 
     const char *host    = (argc > 1) ? argv[1] : "127.0.0.1";
     int         port    = (argc > 2) ? atoi(argv[2]) : 9002;

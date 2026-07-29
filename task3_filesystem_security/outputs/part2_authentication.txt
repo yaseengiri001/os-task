@@ -1,5 +1,5 @@
 # Captured by tools/capture_outputs.sh
-# Date    : 2026-07-29T11:35:00Z (UTC)
+# Date    : 2026-07-29T11:41:23Z (UTC)
 # Host OS : Darwin 25.5.0 arm64
 # Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
 #
@@ -12,21 +12,21 @@ salt and PBKDF2-HMAC-SHA256(password, salt, 200000 rounds).
 
 1. Registering accounts
   REGISTER alice        OK
-           salt   7053866fe044fd2a8ac56b4a52b771c0
-           hash   89672852b6af94f98020bed599ae1b22...  (PBKDF2, 200000 rounds)
+           salt   9c47dea3dd949fd3226504796a959477
+           hash   95ae0d432acf011abddae53ec40abed1...  (PBKDF2, 200000 rounds)
   REGISTER bob          OK
-           salt   8e7f9585dcea1c982e49490aa434748b
-           hash   c6cd38cff956949aad6b37b57bc2f0fe...  (PBKDF2, 200000 rounds)
+           salt   440ede86969b3d9f825d9d43d392f094
+           hash   185505a0eb9d72b1bb4d81d5ed89b4ff...  (PBKDF2, 200000 rounds)
   REGISTER charlie      OK
-           salt   c2cb561e3292b22b28ba57fb5331dcec
-           hash   76c11b6be97538a828fa1979c7993089...  (PBKDF2, 200000 rounds)
+           salt   618ad5bbe9e8488f277a6479c7e99222
+           hash   2130b65ff08c96264ed59e6d4e22675d...  (PBKDF2, 200000 rounds)
   REGISTER dave         REFUSED: password shorter than 8 characters
   REGISTER alice        FAILED: name taken
 
 2. Alice and Charlie chose the IDENTICAL password. Their stored
    hashes must still differ, or the file would leak that fact:
-   alice   89672852b6af94f98020bed599ae1b2295a8d8a3...
-   charlie 76c11b6be97538a828fa1979c799308948f7c679...
+   alice   95ae0d432acf011abddae53ec40abed170b4f8e0...
+   charlie 2130b65ff08c96264ed59e6d4e22675d221b3c09...
    -> different, as required: the unique salts did their job
 
 3. Correct credentials

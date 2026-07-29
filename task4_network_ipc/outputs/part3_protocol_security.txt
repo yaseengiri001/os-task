@@ -1,5 +1,5 @@
 # Captured by tools/capture_outputs.sh
-# Date    : 2026-07-29T11:35:09Z (UTC)
+# Date    : 2026-07-29T11:41:32Z (UTC)
 # Host OS : Darwin 25.5.0 arm64
 # Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
 #
@@ -12,7 +12,7 @@
 Target: 127.0.0.1:9403
 
 --- Session 1: correct usage ---
-[server] conn 1 from 127.0.0.1:59003
+[server] conn 1 from 127.0.0.1:59139
     <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
 
   [1] HELP is available before authenticating
@@ -39,9 +39,9 @@ Target: 127.0.0.1:9403
     -> AUTH alice
 
 [server] conn 1 >> AUTH alice
-    <- 331 CHALLENGE 6956f53a79d06aacf20e4e242700b74c
-    -> RESPONSE 7788ff96a30fd52c65e4d9617ef09076146af059c549ec81043e5cbfb6410 ...(truncated in this log)
-[server] conn 1 >> RESPONSE 7788ff96a30fd52c65e4d9617ef09076146af059c549ec81043
+    <- 331 CHALLENGE 26bc315ffe59c5c253ea70ea98180a39
+    -> RESPONSE 57fa3b8e7a36164400d1fefb7c919240fd9a0e496a866591ffe8ad5d287be ...(truncated in this log)
+[server] conn 1 >> RESPONSE 57fa3b8e7a36164400d1fefb7c919240fd9a0e496a866591ffe
 [server] conn 1 authenticated as alice
     <- 200 OK authenticated as alice
     PASS  authenticated as alice
@@ -56,7 +56,7 @@ Target: 127.0.0.1:9403
     -> TIME
 
 [server] conn 1 >> TIME
-    <- 200 OK 2026-07-29T11:35:10Z
+    <- 200 OK 2026-07-29T11:41:34Z
     PASS  TIME after authentication
 
     -> ECHO hello protocol world
@@ -94,7 +94,7 @@ Target: 127.0.0.1:9403
 
 --- Session 2: authentication failures and rate limiting ---
 [server] conn 1 finished (12 requests)
-[server] conn 2 from 127.0.0.1:59004
+[server] conn 2 from 127.0.0.1:59140
     <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
 
   [9] A malformed username is refused before any work is done
@@ -108,7 +108,7 @@ Target: 127.0.0.1:9403
     -> AUTH alice
 
 [server] conn 2 >> AUTH alice
-    <- 331 CHALLENGE b3f6e03991c0246eeeea7bfab6b9fe63
+    <- 331 CHALLENGE fa64e26679b6d598a7e62511aaae8def
     -> RESPONSE nothex
 
 [server] conn 2 >> RESPONSE nothex
@@ -119,34 +119,34 @@ Target: 127.0.0.1:9403
     -> AUTH alice
 
 [server] conn 2 >> AUTH alice
-    <- 331 CHALLENGE 4a8e8f30a8763ad6ca5de6d9acc8fe2d
-    -> RESPONSE b6b9da109ef5589f934758d3d2839ba194f38d8786a704aadf19c6e6d054b ...(truncated in this log)
-[server] conn 2 >> RESPONSE b6b9da109ef5589f934758d3d2839ba194f38d8786a704aadf1
+    <- 331 CHALLENGE b714e7c1733fecd5f29b656fa7ea2bf2
+    -> RESPONSE 8590483b661d8b1c72b8e2183984df2fdfe555319483dcedb568aae380bd6 ...(truncated in this log)
+[server] conn 2 >> RESPONSE 8590483b661d8b1c72b8e2183984df2fdfe555319483dcedb56
     <- 401 UNAUTHORISED invalid credentials (1 of 3)
     PASS  wrong password rejected
 
     -> AUTH alice
 
 [server] conn 2 >> AUTH alice
-    <- 331 CHALLENGE 3b0af2ec9e8f3bebdc30dc9c4a3ec8a9
-    -> RESPONSE a778ce104a609304b7ce870e5770413e049057c487ec7f6ee7ed8821d7809 ...(truncated in this log)
-[server] conn 2 >> RESPONSE a778ce104a609304b7ce870e5770413e049057c487ec7f6ee7e
+    <- 331 CHALLENGE fd7348c87382aba97d2b68aafdcab348
+    -> RESPONSE 65b2c13aed85fa2f8d8d0a45048b78ea9777b6b59bb39468acb4c30b27093 ...(truncated in this log)
+[server] conn 2 >> RESPONSE 65b2c13aed85fa2f8d8d0a45048b78ea9777b6b59bb39468acb
     <- 401 UNAUTHORISED invalid credentials (2 of 3)
     PASS  wrong password rejected
 
     -> AUTH alice
 
 [server] conn 2 >> AUTH alice
-    <- 331 CHALLENGE daa4c6894dc6bdc6edcd9b73361a16c6
-    -> RESPONSE 41f4aa95ef91f253554018a235a6b70d6c12cfdcf8302f30f011ecbeebed0 ...(truncated in this log)
-[server] conn 2 >> RESPONSE 41f4aa95ef91f253554018a235a6b70d6c12cfdcf8302f30f01
+    <- 331 CHALLENGE 0f8d8ba092e0d5b891e20f3b76ff06f3
+    -> RESPONSE e289697e00bc5b92dee4fa3eaa3d6d9019f5133a8fd83496ef0900c9880cf ...(truncated in this log)
+[server] conn 2 >> RESPONSE e289697e00bc5b92dee4fa3eaa3d6d9019f5133a8fd83496ef0
 [server] conn 2 dropped after 3 auth failures
     <- 429 TOO MANY failed attempts - closing
     PASS  rate limit reached after 3 failures
 
 --- Session 3: an unknown account is indistinguishable ---
 [server] conn 2 finished (9 requests)
-[server] conn 3 from 127.0.0.1:59005
+[server] conn 3 from 127.0.0.1:59141
     <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
 
   [12] AUTH for an account that does not exist still gets a
@@ -154,7 +154,7 @@ Target: 127.0.0.1:9403
     -> AUTH nosuchuser
 
 [server] conn 3 >> AUTH nosuchuser
-    <- 331 CHALLENGE 2a22f169dbc375b7b22534043312404b
+    <- 331 CHALLENGE 8a6bb63196d01f685cefd79ec1ff2a0e
     PASS  challenge issued for an unknown account
 
     -> RESPONSE 0000000000000000000000000000000000000000000000000000000000000 ...(truncated in this log)
@@ -173,9 +173,9 @@ Target: 127.0.0.1:9403
   A client that streams bytes without ever sending \n would make
   an unbounded server buffer grow until memory ran out. The server
   caps the line length instead, so the attack costs it nothing.
-[server] conn 3 finished (3 requests)
 
-[server] conn 4 from 127.0.0.1:59006
+[server] conn 3 finished (3 requests)
+[server] conn 4 from 127.0.0.1:59142
     <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
 
   [13] 8 KB with no newline: refused and the connection dropped

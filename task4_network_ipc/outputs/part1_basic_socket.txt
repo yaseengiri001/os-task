@@ -1,5 +1,5 @@
 # Captured by tools/capture_outputs.sh
-# Date    : 2026-07-29T11:35:05Z (UTC)
+# Date    : 2026-07-29T11:41:27Z (UTC)
 # Host OS : Darwin 25.5.0 arm64
 # Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
 #
@@ -12,7 +12,7 @@
 [client] connected
 
 [client] sending  : "Hello from the client"
-[server] client 1 connected from 127.0.0.1:58998
+[server] client 1 connected from 127.0.0.1:59133
 [server]   received: "Hello from the client" (22 bytes)
 [client] received : "ECHO Hello from the client"
 
@@ -27,8 +27,8 @@
 [client] sending  : "QUIT"
 [server]   received: "QUIT" (5 bytes)
 [server]   client asked to quit
-[client] received : "BYE"
 [server] connection closed (1 of 1 served)
+[client] received : "BYE"
 
 
 [client] disconnected cleanly

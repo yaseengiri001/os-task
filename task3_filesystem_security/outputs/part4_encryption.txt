@@ -1,5 +1,5 @@
 # Captured by tools/capture_outputs.sh
-# Date    : 2026-07-29T11:35:02Z (UTC)
+# Date    : 2026-07-29T11:41:24Z (UTC)
 # Host OS : Darwin 25.5.0 arm64
 # Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
 #
@@ -18,7 +18,7 @@ alice  62000
 bob    58000
 ----
     wrote salary.enc: 119 bytes (32 header + 55 ciphertext + 32 tag)
-    on disk: 534656312f1801baba5a211daf99830f3587028465e507032bc9cc5b13dfffc0...
+    on disk: 53465631af1973cad1e7c3ad0d457f3304747a5f4363848f8d315e51c50cd869...
     The plaintext is not recoverable from that without the key.
 
 2. Decrypting with the correct password
@@ -37,7 +37,7 @@ bob    58000
     plaintext is ever produced or acted upon.
 
 4. Tamper detection: flipping a single bit of the ciphertext
-    byte 37: 0x90 -> 0x91 (one bit changed)
+    byte 37: 0x2c -> 0x2d (one bit changed)
     AUTHENTICATION FAILED - wrong password, or the file was
     altered. Nothing was decrypted.
     Without the MAC this would have silently decrypted to text
@@ -45,8 +45,8 @@ bob    58000
     not read the file. The MAC is what makes that detectable.
 
 5. The SAME plaintext encrypted twice must look different
-    on disk: 534656315612e84d7dffd74fa5273beb2f0e229e05c54c42...
-    on disk: 534656310a36ab2c8aaa3b3a5130f115adfaa139836ae12b...
+    on disk: 5346563179716e6be1acbaee1879a33e2949532a1b5f617b...
+    on disk: 53465631c78878e153bf68318a2c3c8063551e9f19f7c9b8...
     identical ciphertext? NO - each file used a fresh random salt and nonce
     This is what prevents the keystream-reuse attack that broke
     WEP: without it, XORing two ciphertexts would cancel the

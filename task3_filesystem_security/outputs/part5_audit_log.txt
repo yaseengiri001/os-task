@@ -1,5 +1,5 @@
 # Captured by tools/capture_outputs.sh
-# Date    : 2026-07-29T11:35:04Z (UTC)
+# Date    : 2026-07-29T11:41:26Z (UTC)
 # Host OS : Darwin 25.5.0 arm64
 # Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
 #
@@ -15,18 +15,18 @@ tamper-evident rather than merely descriptive.
 
   TIMESTAMP             USER      ACTION       TARGET                 RESULT   CHAIN
   --------------------- --------- ------------ ---------------------- -------- ----------------
-  2026-07-29T11:35:04Z  alice     LOGIN        -                      SUCCESS  2860c401514240b7
-  2026-07-29T11:35:04Z  alice     FILE_CREATE  report.txt             SUCCESS  b7e4d45fe0cd9e00
-  2026-07-29T11:35:04Z  alice     FILE_WRITE   report.txt             SUCCESS  466406967d310a0a
-  2026-07-29T11:35:04Z  bob       LOGIN        -                      FAILURE  341bb22a39bc17f3
-  2026-07-29T11:35:04Z  bob       LOGIN        -                      SUCCESS  6516ac3fbd0cab29
-  2026-07-29T11:35:04Z  bob       FILE_READ    report.txt             SUCCESS  3e6dedb3b0f514a3
-  2026-07-29T11:35:04Z  mallory   LOGIN        -                      FAILURE  31af35479d45296a
-  2026-07-29T11:35:04Z  mallory   FILE_READ    salary.enc             DENIED   be5d452fd7ad9d3d
-  2026-07-29T11:35:04Z  mallory   CHMOD        salary.enc             DENIED   7f008c3694812f37
-  2026-07-29T11:35:04Z  alice     ENCRYPT      salary.enc             SUCCESS  c9a417c77d540d84
-  2026-07-29T11:35:04Z  alice     FILE_DELETE  old_notes.txt          SUCCESS  d06ba86cc46f3dbc
-  2026-07-29T11:35:04Z  alice     LOGOUT       -                      SUCCESS  358a7a86fb920ee7
+  2026-07-29T11:41:26Z  alice     LOGIN        -                      SUCCESS  2da560fa631eba64
+  2026-07-29T11:41:26Z  alice     FILE_CREATE  report.txt             SUCCESS  21f5ffad9da06468
+  2026-07-29T11:41:26Z  alice     FILE_WRITE   report.txt             SUCCESS  c9d6668fe6c80026
+  2026-07-29T11:41:26Z  bob       LOGIN        -                      FAILURE  9c45c708ff982a72
+  2026-07-29T11:41:26Z  bob       LOGIN        -                      SUCCESS  0e75bb98ed53ef3f
+  2026-07-29T11:41:26Z  bob       FILE_READ    report.txt             SUCCESS  f77e28027ed3f3ea
+  2026-07-29T11:41:26Z  mallory   LOGIN        -                      FAILURE  9dd145fea15f787e
+  2026-07-29T11:41:26Z  mallory   FILE_READ    salary.enc             DENIED   00bdade4c409a68e
+  2026-07-29T11:41:26Z  mallory   CHMOD        salary.enc             DENIED   6197e5af9f311b32
+  2026-07-29T11:41:26Z  alice     ENCRYPT      salary.enc             SUCCESS  1a1298ed38341fa0
+  2026-07-29T11:41:26Z  alice     FILE_DELETE  old_notes.txt          SUCCESS  e5e0ab5681c55509
+  2026-07-29T11:41:26Z  alice     LOGOUT       -                      SUCCESS  09631a7a9e45e1e6
 
   Written to audit.log (mode 0600, opened O_APPEND)
 
@@ -45,7 +45,7 @@ tamper-evident rather than merely descriptive.
     entry 8: mallory/FILE_READ/DENIED -> alice/FILE_READ/SUCCESS
 
   CHAIN BROKEN at entry 8
-    2026-07-29T11:35:04Z alice FILE_READ salary.enc
+    2026-07-29T11:41:26Z alice FILE_READ salary.enc
     This entry, or one before it, has been altered.
     The edit is caught. Rewriting the entry did not rewrite the
     link stored with it, and every later link depends on it.
@@ -54,7 +54,7 @@ tamper-evident rather than merely descriptive.
     mallory removes entry 7 (her failed login) completely:
 
   CHAIN BROKEN at entry 7
-    2026-07-29T11:35:04Z mallory FILE_READ salary.enc
+    2026-07-29T11:41:26Z mallory FILE_READ salary.enc
     This entry, or one before it, has been altered.
     Also caught. The chain records the ORDER of events, so a
     missing entry leaves a gap the neighbouring links expose.

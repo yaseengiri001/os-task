@@ -47,6 +47,18 @@
  * -----------------------------------------------------------------------------
  */
 
+/*
+ * Request the POSIX.1-2008 interfaces before any header is included.
+ *
+ * Without this, glibc exposes only the ISO C subset under -std=c11 and hides
+ * pread/pwrite, pthread_rwlock_t and friends, so a strict Linux build fails
+ * with "implicit declaration". macOS happens to expose them anyway, which is
+ * exactly why this has to be tested on both - the omission is invisible on one
+ * platform and fatal on the other.
+ */
+#define _POSIX_C_SOURCE 200809L
+
+
 #include "../common/sha256.h"
 #include "../common/chacha20.h"
 #include <stdio.h>
@@ -827,7 +839,11 @@ static void run_demo(void)
         while (fp && fgets(line, sizeof(line), fp)) {
             char *d = strstr(line, "|DENIED|");
             if (d && !changed) {
-                char rebuilt[512];
+                /* line is 512 bytes and d points into it, so the rebuilt
+                   entry can be up to 512 + strlen("|SUCCESS|") bytes. Sizing
+                   this buffer at 512 would silently truncate - GCC's
+                   -Wformat-truncation catches exactly that. */
+                char rebuilt[640];
                 *d = '\0';
                 snprintf(rebuilt, sizeof(rebuilt), "%s|SUCCESS|%s",
                          line, d + 8);

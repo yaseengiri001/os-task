@@ -58,11 +58,24 @@
  * -----------------------------------------------------------------------------
  */
 
+/*
+ * Request the POSIX.1-2008 interfaces before any header is included.
+ *
+ * Without this, glibc exposes only the ISO C subset under -std=c11 and hides
+ * pread/pwrite, pthread_rwlock_t and friends, so a strict Linux build fails
+ * with "implicit declaration". macOS happens to expose them anyway, which is
+ * exactly why this has to be tested on both - the omission is invisible on one
+ * platform and fatal on the other.
+ */
+#define _POSIX_C_SOURCE 200809L
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <time.h>    /* nanosleep */
 #include <signal.h>
 #include <pthread.h>
 #include <sys/socket.h>
@@ -76,6 +89,21 @@
 #define MAX_CONCURRENT      32   /* refuse beyond this: bounded resources */
 
 /* ---- shared state, protected by one mutex ------------------------------- */
+
+/*
+ * Sleep for `us` microseconds.
+ *
+ * nanosleep() rather than sleep_us(): usleep was declared obsolete in
+ * POSIX.1-2001 and REMOVED altogether in POSIX.1-2008, so a strict standards
+ * build does not declare it at all. nanosleep is its specified replacement.
+ */
+static void sleep_us(long us)
+{
+    struct timespec ts;
+    ts.tv_sec  = us / 1000000L;
+    ts.tv_nsec = (us % 1000000L) * 1000L;
+    nanosleep(&ts, NULL);
+}
 static pthread_mutex_t stats_lock = PTHREAD_MUTEX_INITIALIZER;
 static int total_connections   = 0;   /* accepted since start   */
 static int active_connections  = 0;   /* being served right now */
@@ -255,7 +283,7 @@ static void *client_handler(void *arg)
             printf("[server] %s is doing slow work "
                    "(others keep running)\n", label);
             fflush(stdout);
-            usleep(400000);                      /* 0.4 seconds */
+            sleep_us(400000);                      /* 0.4 seconds */
             send_all(fd, "SLOW done\n", 10);
             handled++;
             continue;
@@ -393,7 +421,7 @@ int main(int argc, char **argv)
         int active = active_connections;
         pthread_mutex_unlock(&stats_lock);
         if (active == 0) break;
-        usleep(100000);
+        sleep_us(100000);
     }
 
     close(listen_fd);

@@ -1,5 +1,5 @@
 # Captured by tools/capture_outputs.sh
-# Date    : 2026-07-29T11:35:06Z (UTC)
+# Date    : 2026-07-29T11:41:29Z (UTC)
 # Host OS : Darwin 25.5.0 arm64
 # Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
 #
@@ -12,43 +12,43 @@ Launching 4 clients SIMULTANEOUSLY against 127.0.0.1:9402
 Client 1 asks for slow work; if the others finish first, the
 server handled them concurrently.
 
-[server] c1 connected from 127.0.0.1:59001 (2 active now)
-[server] c4 connected from 127.0.0.1:58999 (4 active now)
-[server] c2 connected from 127.0.0.1:59000 (4 active now)
-[server] c3 connected from 127.0.0.1:59002 (3 active now)
-[client 4] server says: WELCOME c4 - you are one of 4 active
-[client 3] server says: WELCOME c3 - you are one of 3 active
-[client 2] server says: WELCOME c2 - you are one of 4 active
-[client 1] server says: WELCOME c1 - you are one of 2 active
+[server] c4 connected from 127.0.0.1:59138 (2 active now)
+[server] c1 connected from 127.0.0.1:59136 (3 active now)
+[server] c3 connected from 127.0.0.1:59137 (4 active now)
+[server] c2 connected from 127.0.0.1:59135 (4 active now)
+[client 4] server says: WELCOME c4 - you are one of 2 active
+[client 1] server says: WELCOME c1 - you are one of 3 active
 [client 1] requesting SLOW work (0.4s) ...
-[client 3] got: ECHO [c3] message 1 from client 3
-[client 2] got: ECHO [c2] message 1 from client 2
+[client 2] server says: WELCOME c2 - you are one of 4 active
+[client 3] server says: WELCOME c3 - you are one of 4 active
 [server] c1 is doing slow work (others keep running)
 [client 4] got: ECHO [c4] message 1 from client 4
-[client 3] got: ECHO [c3] message 2 from client 3
-[client 2] got: ECHO [c2] message 2 from client 2
+[client 2] got: ECHO [c2] message 1 from client 2
+[client 3] got: ECHO [c3] message 1 from client 3
 [client 4] got: ECHO [c4] message 2 from client 4
-[client 3] STATS total=4 active=4 peak=4 messages=6
-[client 2] STATS total=4 active=4 peak=4 messages=6
+[client 2] got: ECHO [c2] message 2 from client 2
+[client 3] got: ECHO [c3] message 2 from client 3
 [client 4] STATS total=4 active=4 peak=4 messages=6
-[server] c3 disconnected after 2 message(s) (3 still active)
-[client 3] done in 0.00s
+[client 2] STATS total=4 active=4 peak=4 messages=6
+[client 3] STATS total=4 active=4 peak=4 messages=6
+[server] c4 disconnected after 2 message(s) (3 still active)
+[client 4] done in 0.00s
 [server] c2 disconnected after 2 message(s) (2 still active)
 [client 2] done in 0.00s
-[server] c4 disconnected after 2 message(s) (1 still active)
-[client 4] done in 0.00s
+[server] c3 disconnected after 2 message(s) (1 still active)
+[client 3] done in 0.00s
 [client 1] slow work finished: SLOW done
 [client 1] STATS total=4 active=1 peak=4 messages=6
 [server] c1 disconnected after 1 message(s) (0 still active)
-[client 1] done in 0.40s
+[client 1] done in 0.41s
 
 --- summary ---
-  client 1: OK       0.40s
+  client 1: OK       0.41s
   client 2: OK       0.00s
   client 3: OK       0.00s
   client 4: OK       0.00s
   4 of 4 succeeded
-  wall-clock elapsed : 0.40s
+  wall-clock elapsed : 0.41s
   sum of individual  : 0.41s
 
   The elapsed time is close to the SLOWEST client rather than the

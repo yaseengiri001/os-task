@@ -33,15 +33,43 @@
  * -----------------------------------------------------------------------------
  */
 
+/*
+ * Request the POSIX.1-2008 interfaces before any header is included.
+ *
+ * Without this, glibc exposes only the ISO C subset under -std=c11 and hides
+ * pread/pwrite, pthread_rwlock_t and friends, so a strict Linux build fails
+ * with "implicit declaration". macOS happens to expose them anyway, which is
+ * exactly why this has to be tested on both - the omission is invisible on one
+ * platform and fatal on the other.
+ */
+#define _POSIX_C_SOURCE 200809L
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>    /* nanosleep */
 
 #define N_ACCOUNTS 2
 #define TRANSFERS  100000L   /* transfers per thread */
 
+
+/*
+ * Sleep for `us` microseconds.
+ *
+ * nanosleep() rather than sleep_us(): usleep was declared obsolete in
+ * POSIX.1-2001 and REMOVED altogether in POSIX.1-2008, so a strict standards
+ * build does not declare it at all. nanosleep is its specified replacement.
+ */
+static void sleep_us(long us)
+{
+    struct timespec ts;
+    ts.tv_sec  = us / 1000000L;
+    ts.tv_nsec = (us % 1000000L) * 1000L;
+    nanosleep(&ts, NULL);
+}
 typedef struct {
     long            balance;
     pthread_mutex_t lock;
@@ -103,7 +131,7 @@ static long transfer_trylock(int from, int to, long amt)
 static void transfer_naive(int from, int to, long amt)
 {
     pthread_mutex_lock(&accounts[from].lock);
-    usleep(1);
+    sleep_us(1);
     pthread_mutex_lock(&accounts[to].lock);
 
     accounts[from].balance -= amt;

@@ -78,6 +78,18 @@
  * -----------------------------------------------------------------------------
  */
 
+/*
+ * Request the POSIX.1-2008 interfaces before any header is included.
+ *
+ * Without this, glibc exposes only the ISO C subset under -std=c11 and hides
+ * pread/pwrite, pthread_rwlock_t and friends, so a strict Linux build fails
+ * with "implicit declaration". macOS happens to expose them anyway, which is
+ * exactly why this has to be tested on both - the omission is invisible on one
+ * platform and fatal on the other.
+ */
+#define _POSIX_C_SOURCE 200809L
+
+
 #include "../../task3_filesystem_security/common/sha256.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -111,6 +123,21 @@
    send something derived from the hash and the hash would then BE the
    password. Task 3's salted-hash storage and this design solve genuinely
    different problems, and a system that needs both uses TLS plus hashes. */
+
+/*
+ * Sleep for `us` microseconds.
+ *
+ * nanosleep() rather than sleep_us(): usleep was declared obsolete in
+ * POSIX.1-2001 and REMOVED altogether in POSIX.1-2008, so a strict standards
+ * build does not declare it at all. nanosleep is its specified replacement.
+ */
+static void sleep_us(long us)
+{
+    struct timespec ts;
+    ts.tv_sec  = us / 1000000L;
+    ts.tv_nsec = (us % 1000000L) * 1000L;
+    nanosleep(&ts, NULL);
+}
 typedef struct {
     const char *username;
     const char *password;
@@ -637,7 +664,7 @@ int main(int argc, char **argv)
         int active = active_connections;
         pthread_mutex_unlock(&stats_lock);
         if (active == 0) break;
-        usleep(100000);
+        sleep_us(100000);
     }
     close(listen_fd);
 
