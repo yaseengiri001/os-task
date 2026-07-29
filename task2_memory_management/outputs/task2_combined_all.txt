@@ -1,0 +1,179 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:00Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+
+=== DEMO 1: Paging with a configurable page size ===
+Requirement 2.1(1)
+
+  Page size       : 256 bytes (offset = low 8 bits)
+  Virtual memory  : 4096 bytes = 16 pages
+  Physical memory : 1024 bytes = 4 frames
+
+  Translation: page = addr >> 8, offset = addr & 0xFF
+
+  addr 0     -> page 0   offset 0    | FAULT  loaded into frame 0   -> phys 0    
+    memory: [ p0  --  --  --  ]
+  addr 100   -> page 0   offset 100  | HIT   frame 0   -> phys 100  
+  addr 260   -> page 1   offset 4    | FAULT  loaded into frame 1   -> phys 260  
+    memory: [ p0  p1  --  --  ]
+  addr 1000  -> page 3   offset 232  | FAULT  loaded into frame 2   -> phys 744  
+    memory: [ p0  p1  p3  --  ]
+  addr 100   -> page 0   offset 100  | HIT   frame 0   -> phys 100  
+  addr 2500  -> page 9   offset 196  | FAULT  loaded into frame 3   -> phys 964  
+    memory: [ p0  p1  p3  p9  ]
+  addr 5000  -> INVALID (outside 0..4095)
+  addr 3000  -> page 11  offset 184  | FAULT  no free frame (this is what demos 2 and 3 solve)
+  addr 3500  -> page 13  offset 172  | FAULT  no free frame (this is what demos 2 and 3 solve)
+  addr 4000  -> page 15  offset 160  | FAULT  no free frame (this is what demos 2 and 3 solve)
+  addr 300   -> page 1   offset 44   | HIT   frame 1   -> phys 300  
+
+  Accesses 11 | hits 3 | faults 7
+  Trade-off: 16 page-table entries, worst-case 255 bytes wasted in a
+  process's last page. Smaller pages waste less but need a bigger table.
+
+=== DEMO 2: FIFO page replacement ===
+Requirement 2.1(2), first algorithm
+
+Policy: evict the page resident LONGEST, however useful it still is.
+
+Reference string: 1 2 3 4 1 2 5 1 2 3 4 5 
+
+Simulation with 3 frames  ('.' = empty)
+
+Ref |  F0  F1  F2  | Result   Evicted
+----+--------------+------------------
+  1 |   1   .   .  | FAULT    (free frame)
+  2 |   1   2   .  | FAULT    (free frame)
+  3 |   1   2   3  | FAULT    (free frame)
+  4 |   4   2   3  | FAULT    evicted page 1
+  1 |   4   1   3  | FAULT    evicted page 2
+  2 |   4   1   2  | FAULT    evicted page 3
+  5 |   5   1   2  | FAULT    evicted page 4
+  1 |   5   1   2  | HIT
+  2 |   5   1   2  | HIT
+  3 |   5   3   2  | FAULT    evicted page 1
+  4 |   5   3   4  | FAULT    evicted page 2
+  5 |   5   3   4  | HIT
+
+  Page hits 3 | page faults 9
+  Hit ratio 25.00% | miss ratio 75.00%
+
+  Belady's anomaly check (more frames should never be worse):
+    1 frame(s): 12 faults
+    2 frame(s): 12 faults
+    3 frame(s):  9 faults
+    4 frame(s): 10 faults   <-- ANOMALY (worse than 3 frames)
+    5 frame(s):  5 faults
+  Confirmed. FIFO is not a stack algorithm, so extra memory can
+  change the eviction order for the worse. LRU cannot do this.
+
+=== DEMO 3: LRU page replacement ===
+Requirement 2.1(2), second algorithm
+
+Policy: evict the page UNUSED for the longest time, because recent
+        use is the best simple predictor of imminent use.
+
+Reference string: 1 2 3 4 1 2 5 1 2 3 4 5 
+
+Simulation with 3 frames  ('.' = empty)
+
+Ref |  F0  F1  F2  | Result   Detail
+----+--------------+------------------------------
+  1 |   1   .   .  | FAULT    (free frame 0)
+  2 |   1   2   .  | FAULT    (free frame 1)
+  3 |   1   2   3  | FAULT    (free frame 2)
+  4 |   4   2   3  | FAULT    evicted page 1 (least recently used)
+  1 |   4   1   3  | FAULT    evicted page 2 (least recently used)
+  2 |   4   1   2  | FAULT    evicted page 3 (least recently used)
+  5 |   5   1   2  | FAULT    evicted page 4 (least recently used)
+  1 |   5   1   2  | HIT      refreshed frame 1
+  2 |   5   1   2  | HIT      refreshed frame 2
+  3 |   3   1   2  | FAULT    evicted page 5 (least recently used)
+  4 |   3   4   2  | FAULT    evicted page 1 (least recently used)
+  5 |   3   4   5  | FAULT    evicted page 2 (least recently used)
+
+  Page hits 2 | page faults 10
+  Hit ratio 16.67% | miss ratio 83.33%
+
+  Stack-property check (the anomaly FIFO showed):
+    1 frame(s): 12 faults
+    2 frame(s): 12 faults
+    3 frame(s): 10 faults
+    4 frame(s):  8 faults
+    5 frame(s):  5 faults
+  No anomaly, as theory predicts: LRU is a stack algorithm, so the
+  pages held with N frames are always a subset of those held with
+  N+1, and extra memory can only ever help.
+
+=== DEMO 4: Page faults, hit/miss ratios and comparison ===
+Requirement 2.1(3) and 2.1(4)
+
+  hit ratio  = hits   / references x 100
+  miss ratio = faults / references x 100   (a miss IS a page fault)
+
+  Four policies on identical inputs: FIFO, LRU, CLOCK (second-chance,
+  what real kernels use) and OPT (needs the future; the lower bound).
+
+  --- Classic teaching string (12 references) ---
+
+  Frames |   FIFO      |    LRU      |   CLOCK     |    OPT
+         |  flt  hit%  |  flt  hit%  |  flt  hit%  |  flt  hit%
+  -------+-------------+-------------+-------------+------------
+    2    |   12    0.0 |   12    0.0 |   12    0.0 |    9   25.0
+    3    |    9   25.0 |   10   16.7 |    9   25.0 |    7   41.7
+    4    |   10   16.7 |    8   33.3 |   10   16.7 |    6   50.0
+    5    |    5   58.3 |    5   58.3 |    5   58.3 |    5   58.3
+    6    |    5   58.3 |    5   58.3 |    5   58.3 |    5   58.3
+
+  Page faults at 3 frames (shorter is better):
+    FIFO  [##############################    ] 9
+    LRU   [##################################] 10
+    CLOCK [##############################    ] 9
+    OPT   [#######################           ] 7  (lower bound)
+    -> FIFO won by 1 fault(s) here.
+
+  --- Working set + streaming (realistic) (100 references) ---
+
+  Frames |   FIFO      |    LRU      |   CLOCK     |    OPT
+         |  flt  hit%  |  flt  hit%  |  flt  hit%  |  flt  hit%
+  -------+-------------+-------------+-------------+------------
+    2    |   61   39.0 |   62   38.0 |   61   39.0 |   46   54.0
+    3    |   49   51.0 |   46   54.0 |   48   52.0 |   31   69.0
+    4    |   44   56.0 |   40   60.0 |   41   59.0 |   24   76.0
+    5    |   38   62.0 |   30   70.0 |   36   64.0 |   22   78.0
+    6    |   36   64.0 |   26   74.0 |   33   67.0 |   20   80.0
+
+  Page faults at 4 frames (shorter is better):
+    FIFO  [##################################] 44
+    LRU   [##############################    ] 40
+    CLOCK [###############################   ] 41
+    OPT   [##################                ] 24  (lower bound)
+    -> LRU won by 4 fault(s) here.
+
+  --- Uniform random (no locality) (96 references) ---
+
+  Frames |   FIFO      |    LRU      |   CLOCK     |    OPT
+         |  flt  hit%  |  flt  hit%  |  flt  hit%  |  flt  hit%
+  -------+-------------+-------------+-------------+------------
+    2    |   83   13.5 |   81   15.6 |   83   13.5 |   68   29.2
+    3    |   77   19.8 |   79   17.7 |   77   19.8 |   53   44.8
+    4    |   69   28.1 |   63   34.4 |   65   32.3 |   43   55.2
+    5    |   56   41.7 |   56   41.7 |   51   46.9 |   34   64.6
+    6    |   45   53.1 |   43   55.2 |   44   54.2 |   27   71.9
+
+  Page faults at 4 frames (shorter is better):
+    FIFO  [##################################] 69
+    LRU   [###############################   ] 63
+    CLOCK [################################  ] 65
+    OPT   [#####################             ] 43  (lower bound)
+    -> LRU won by 6 fault(s) here.
+
+  Conclusion: which policy wins is a property of the ACCESS PATTERN,
+  not of the algorithm alone. LRU pays off where a hot working set is
+  re-read while other pages stream past; where there is no locality the
+  policies converge and FIFO's much lower cost decides it. Only FIFO
+  can suffer Belady's anomaly. CLOCK tracks LRU at nearly FIFO's cost,
+  which is why it is what production kernels actually implement.

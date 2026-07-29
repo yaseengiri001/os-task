@@ -2,12 +2,46 @@
 # C executables have no extension, so each one is listed by its full path.
 # (A bare name like "task1_combined" would also ignore the FOLDER of that name,
 #  so the paths are anchored to the file that the Makefile actually produces.)
-# Task 1
+
+# Task 1 - process management and threading
 task1_process_threading/part1_threads/threads_demo
 task1_process_threading/part2_synchronization/sync_demo
 task1_process_threading/part3_round_robin/round_robin
 task1_process_threading/part4_deadlock/deadlock
 task1_process_threading/task1_combined/task1_combined
+
+# Task 2 - memory management simulation
+task2_memory_management/part1_paging/paging
+task2_memory_management/part2_fifo/fifo
+task2_memory_management/part3_lru/lru
+task2_memory_management/part4_statistics/statistics
+task2_memory_management/task2_combined/task2_combined
+
+# Task 3 - file system operations and security
+task3_filesystem_security/common/test_vectors
+task3_filesystem_security/part1_file_ops/file_ops
+task3_filesystem_security/part2_authentication/auth
+task3_filesystem_security/part3_permissions/permissions
+task3_filesystem_security/part4_encryption/encryption
+task3_filesystem_security/part5_audit_log/audit_log
+task3_filesystem_security/task3_combined/task3_combined
+
+# Task 4 - network programming and IPC (a server/client pair per folder)
+task4_network_ipc/*/server
+task4_network_ipc/*/client
+
+# Runtime data produced by the Task 3 programs. These are working files, not
+# source: shadow.db holds password hashes and audit.log holds an activity
+# trail, so neither belongs in version control.
+**/secure_files/
+**/shadow.db
+**/audit.log
+**/salary.enc
+**/perm_demo.txt
+**/same_a.enc
+**/same_b.enc
+
+# Generic build leftovers
 *.o
 *.out
 *.exe

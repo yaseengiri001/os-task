@@ -1,0 +1,36 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:00Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+Crypto self-test - checking against published vectors
+=====================================================
+
+SHA-256  (FIPS 180-4)
+  PASS  empty string                               e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  PASS  "abc"                                      ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
+  PASS  56-byte message (two-block padding)        248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1
+  PASS  one million 'a' (streaming)                cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0
+
+HMAC-SHA256  (RFC 4231)
+  PASS  case 1: 20-byte key                        b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7
+  PASS  case 2: short key                          5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843
+  PASS  case 3: repeated data                      773ea91e36800e46854db8ebd09181a72959098b3ef8c122d9635514ced565fe
+  PASS  case 6: key longer than block size         60e431591ee0b67f0d8a26aacbf5b77f8e0bc6213728c5140546040f0ee37f54
+
+PBKDF2-HMAC-SHA256  (RFC 7914)
+  PASS  password/salt, 1 iteration                 120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b
+  PASS  password/salt, 2 iterations                ae4d0c95af6b46d32d0adff928f06dd02a303f8ef3c251dfd6e2d85a95474c43
+  PASS  password/salt, 4096 iterations             c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a
+
+ChaCha20  (RFC 8439)
+  PASS  2.3.2 keystream block                      10f1e7e4d13b5915500fdd1fa32071c4c7d1f4c733c068030422aa9ac3d4...
+  PASS  2.4.2 encryption (114 bytes)               6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9f...
+  PASS  decrypt == encrypt (XOR self-inverse)      round-trip returns the plaintext
+
+Constant-time comparison
+  PASS  behaviour                                  equal matches, unequal differs
+
+=====================================================
+All 15 checks PASSED - the crypto module matches the standards.

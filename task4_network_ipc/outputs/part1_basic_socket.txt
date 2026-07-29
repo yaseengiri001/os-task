@@ -1,0 +1,35 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:05Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+[server] listening on port 9401 (backlog 8)
+[server] one client at a time - this is what Part 2 fixes
+[server] will exit after 1 client(s), or on Ctrl-C
+
+[client] connecting to 127.0.0.1:9401 ...
+[client] connected
+
+[client] sending  : "Hello from the client"
+[server] client 1 connected from 127.0.0.1:58998
+[server]   received: "Hello from the client" (22 bytes)
+[client] received : "ECHO Hello from the client"
+
+[client] sending  : "Operating Systems and Security"
+[server]   received: "Operating Systems and Security" (31 bytes)
+[client] received : "ECHO Operating Systems and Security"
+
+[client] sending  : "Task 4: network programming"
+[server]   received: "Task 4: network programming" (28 bytes)
+[client] received : "ECHO Task 4: network programming"
+
+[client] sending  : "QUIT"
+[server]   received: "QUIT" (5 bytes)
+[server]   client asked to quit
+[client] received : "BYE"
+[server] connection closed (1 of 1 served)
+
+
+[client] disconnected cleanly
+[server] shut down cleanly after 1 client(s)

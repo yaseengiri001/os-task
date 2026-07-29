@@ -1,0 +1,76 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:04Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== Audit logging ===
+Requirement 3.1(5)
+
+Every entry is chained to the one before it with
+HMAC-SHA256(key, previous_link || entry), so the log is
+tamper-evident rather than merely descriptive.
+
+1. Recording activity
+
+  TIMESTAMP             USER      ACTION       TARGET                 RESULT   CHAIN
+  --------------------- --------- ------------ ---------------------- -------- ----------------
+  2026-07-29T11:35:04Z  alice     LOGIN        -                      SUCCESS  2860c401514240b7
+  2026-07-29T11:35:04Z  alice     FILE_CREATE  report.txt             SUCCESS  b7e4d45fe0cd9e00
+  2026-07-29T11:35:04Z  alice     FILE_WRITE   report.txt             SUCCESS  466406967d310a0a
+  2026-07-29T11:35:04Z  bob       LOGIN        -                      FAILURE  341bb22a39bc17f3
+  2026-07-29T11:35:04Z  bob       LOGIN        -                      SUCCESS  6516ac3fbd0cab29
+  2026-07-29T11:35:04Z  bob       FILE_READ    report.txt             SUCCESS  3e6dedb3b0f514a3
+  2026-07-29T11:35:04Z  mallory   LOGIN        -                      FAILURE  31af35479d45296a
+  2026-07-29T11:35:04Z  mallory   FILE_READ    salary.enc             DENIED   be5d452fd7ad9d3d
+  2026-07-29T11:35:04Z  mallory   CHMOD        salary.enc             DENIED   7f008c3694812f37
+  2026-07-29T11:35:04Z  alice     ENCRYPT      salary.enc             SUCCESS  c9a417c77d540d84
+  2026-07-29T11:35:04Z  alice     FILE_DELETE  old_notes.txt          SUCCESS  d06ba86cc46f3dbc
+  2026-07-29T11:35:04Z  alice     LOGOUT       -                      SUCCESS  358a7a86fb920ee7
+
+  Written to audit.log (mode 0600, opened O_APPEND)
+
+2. Verifying the untouched log
+  CHAIN INTACT - all 12 entries verify against their neighbours.
+
+3. What the log shows on inspection
+    12 entries: 2 failed logins, 2 denied operations.
+    mallory failed to log in and was then denied twice while
+    reaching for an encrypted file and trying to change its
+    permissions. Individually each line is unremarkable; the
+    SEQUENCE is what identifies it as probing.
+
+4. An attacker edits the log to hide their tracks
+    mallory rewrites her DENIED read as SUCCESS by someone else:
+    entry 8: mallory/FILE_READ/DENIED -> alice/FILE_READ/SUCCESS
+
+  CHAIN BROKEN at entry 8
+    2026-07-29T11:35:04Z alice FILE_READ salary.enc
+    This entry, or one before it, has been altered.
+    The edit is caught. Rewriting the entry did not rewrite the
+    link stored with it, and every later link depends on it.
+
+5. Deleting an entry outright
+    mallory removes entry 7 (her failed login) completely:
+
+  CHAIN BROKEN at entry 7
+    2026-07-29T11:35:04Z mallory FILE_READ salary.enc
+    This entry, or one before it, has been altered.
+    Also caught. The chain records the ORDER of events, so a
+    missing entry leaves a gap the neighbouring links expose.
+    Simply deleting evidence is not enough.
+
+6. Confirming the log is valid again after restoring it
+  CHAIN INTACT - all 12 entries verify against their neighbours.
+
+Summary
+  The log answers who did what, to which object, when, and whether
+  it succeeded. Chaining each entry to its predecessor with a keyed
+  HMAC means modification, deletion, insertion and reordering are
+  all detectable, and the failure is localised to an entry.
+  Secrets are never logged, since logs travel more widely than the
+  data they describe.
+  The honest limit: the key is on this machine, so an attacker with
+  root could forge a consistent log. Real deployments ship entries
+  off the host as they are written, which is what puts them beyond
+  a local attacker's reach.

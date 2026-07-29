@@ -1,4 +1,8 @@
-$ cd part4_deadlock && make run
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:34:57Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
 
 Deadlock prevention: two threads make OPPOSITE transfers between
 two locked accounts - the classic deadlock trigger.
@@ -10,7 +14,7 @@ two locked accounts - the classic deadlock trigger.
 [Prevention 2] Trylock + backoff (never wait holding a lock):
   finished - no deadlock.
   balances: acct0=1000  acct1=1000  total=2000 (started at 2000)
-  trylock backoffs handled: 6294
+  trylock backoffs handled: 11114
 
 Both preventions kept the books correct AND never deadlocked.
 Try './deadlock naive' to watch the unsafe version hang.

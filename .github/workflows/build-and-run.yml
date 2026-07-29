@@ -1,0 +1,153 @@
+# ST5004CEM - Operating Systems and Security
+#
+# Builds every task with GCC on Ubuntu Linux and runs every program, capturing
+# the output.
+#
+# WHY THIS EXISTS
+#   Two reasons, and the second is the important one.
+#
+#   1. It proves the code is portable. Everything is written against POSIX
+#      rather than any one system's extensions, and this compiles it with a
+#      different compiler (gcc, not clang) on a different operating system with
+#      warnings enabled and treated as errors.
+#
+#   2. It is where the report's output actually comes from. The report states
+#      that the programs were compiled with GCC on Ubuntu Linux, and the logs
+#      it reproduces are downloaded from this workflow - so that claim is
+#      verifiable by anyone, rather than asserted. Every run records the kernel
+#      version and compiler version in the header of each captured file.
+#
+# The workflow runs on every push and can also be started by hand from the
+# Actions tab.
+
+name: Build and run on Linux
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Record the build environment
+        run: |
+          {
+            echo "## Build environment"
+            echo
+            echo '```'
+            echo "OS       : $(lsb_release -ds 2>/dev/null || cat /etc/os-release | grep PRETTY_NAME | cut -d'\"' -f2)"
+            echo "Kernel   : $(uname -srm)"
+            echo "Compiler : $(gcc --version | head -1)"
+            echo "libc     : $(ldd --version | head -1)"
+            echo "Make     : $(make --version | head -1)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          uname -a
+          gcc --version
+
+      # A stricter build than the Makefiles use. Warnings are promoted to
+      # errors here so that anything the normal build merely mentions cannot be
+      # ignored: a warning nobody reads is the same as no warning at all.
+      - name: Compile every source file with warnings as errors
+        run: |
+          set -e
+          STRICT="-Wall -Wextra -Werror -std=c11 -pthread"
+          CRYPTO="task3_filesystem_security/common/sha256.c task3_filesystem_security/common/chacha20.c"
+          fail=0
+
+          compile() {   # compile <output> <sources...>
+            printf '  %-52s ' "$1"
+            if gcc $STRICT -o "/tmp/$1" "${@:2}" 2> "/tmp/$1.log"; then
+              echo "OK"
+            else
+              echo "FAILED"
+              cat "/tmp/$1.log"
+              fail=1
+            fi
+          }
+
+          echo "Task 1"
+          compile t1p1 task1_process_threading/part1_threads/threads_demo.c
+          compile t1p2 task1_process_threading/part2_synchronization/sync_demo.c
+          compile t1p3 task1_process_threading/part3_round_robin/round_robin.c
+          compile t1p4 task1_process_threading/part4_deadlock/deadlock.c
+          compile t1c  task1_process_threading/task1_combined/task1_combined.c
+
+          echo "Task 2"
+          compile t2p1 task2_memory_management/part1_paging/paging.c
+          compile t2p2 task2_memory_management/part2_fifo/fifo.c
+          compile t2p3 task2_memory_management/part3_lru/lru.c
+          compile t2p4 task2_memory_management/part4_statistics/statistics.c
+          compile t2c  task2_memory_management/task2_combined/task2_combined.c
+
+          echo "Task 3"
+          compile t3test task3_filesystem_security/common/test_vectors.c $CRYPTO
+          compile t3p1 task3_filesystem_security/part1_file_ops/file_ops.c
+          compile t3p2 task3_filesystem_security/part2_authentication/auth.c \
+                       task3_filesystem_security/common/sha256.c
+          compile t3p3 task3_filesystem_security/part3_permissions/permissions.c
+          compile t3p4 task3_filesystem_security/part4_encryption/encryption.c $CRYPTO
+          compile t3p5 task3_filesystem_security/part5_audit_log/audit_log.c \
+                       task3_filesystem_security/common/sha256.c
+          compile t3c  task3_filesystem_security/task3_combined/task3_combined.c $CRYPTO
+
+          echo "Task 4"
+          compile t4p1s task4_network_ipc/part1_basic_socket/server.c
+          compile t4p1c task4_network_ipc/part1_basic_socket/client.c
+          compile t4p2s task4_network_ipc/part2_concurrent/server.c
+          compile t4p2c task4_network_ipc/part2_concurrent/client.c
+          compile t4p3s task4_network_ipc/part3_protocol_security/server.c \
+                        task3_filesystem_security/common/sha256.c
+          compile t4p3c task4_network_ipc/part3_protocol_security/client.c \
+                        task3_filesystem_security/common/sha256.c
+          compile t4cs  task4_network_ipc/task4_combined/server.c \
+                        task3_filesystem_security/common/sha256.c
+          compile t4cc  task4_network_ipc/task4_combined/client.c \
+                        task3_filesystem_security/common/sha256.c
+
+          exit $fail
+
+      # The crypto module underpins Tasks 3 and 4. If it does not match the
+      # published NIST and RFC vectors, nothing built on it can be trusted, so
+      # this runs before anything else and fails the build outright.
+      - name: Verify the crypto module against published test vectors
+        run: |
+          /tmp/t3test
+          echo "Crypto self-test passed on this Linux runner." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build and run everything, capturing output
+        run: |
+          chmod +x tools/capture_outputs.sh
+          CC=gcc tools/capture_outputs.sh
+
+      - name: Summarise the captured logs
+        if: always()
+        run: |
+          {
+            echo
+            echo "## Captured output"
+            echo
+            echo "| File | Lines |"
+            echo "|---|---|"
+            for f in task*/outputs/*.txt; do
+              [ -f "$f" ] && echo "| \`$f\` | $(wc -l < "$f") |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # The logs are uploaded so they can be downloaded and used as the
+      # figures in the report - genuine Linux output rather than a screenshot
+      # taken on a different machine.
+      - name: Upload the captured output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-output-logs
+          path: task*/outputs/*.txt
+          if-no-files-found: error

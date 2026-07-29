@@ -1,0 +1,49 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:34:59Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== Paging system with a configurable page size ===
+
+Configuration
+  Page size            : 1024 bytes (offset uses the low 10 bits)
+  Virtual memory       : 4096 bytes = 4 pages
+  Physical memory      : 1024 bytes = 1 frames
+  Page-table entries   : 4
+
+Address translation:  page = addr >> 10,  offset = addr & 0x3FF
+
+Translating 11 virtual addresses
+---------------------------------------------------------------
+  addr 0     -> page 0   offset 0    | FAULT  loaded into frame 0   -> phys 0    
+    memory: [ p0  ]
+  addr 100   -> page 0   offset 100  | HIT   frame 0   -> phys 100  
+  addr 260   -> page 0   offset 260  | HIT   frame 0   -> phys 260  
+  addr 1000  -> page 0   offset 1000 | HIT   frame 0   -> phys 1000 
+  addr 100   -> page 0   offset 100  | HIT   frame 0   -> phys 100  
+  addr 2500  -> page 2   offset 452  | FAULT  no free frame (replacement needed - see Parts 2 and 3)
+  addr 5000  -> INVALID (outside 0..4095)
+  addr 3000  -> page 2   offset 952  | FAULT  no free frame (replacement needed - see Parts 2 and 3)
+  addr 3500  -> page 3   offset 428  | FAULT  no free frame (replacement needed - see Parts 2 and 3)
+  addr 4000  -> page 3   offset 928  | FAULT  no free frame (replacement needed - see Parts 2 and 3)
+  addr 300   -> page 0   offset 300  | HIT   frame 0   -> phys 300  
+
+Page table (resident pages only)
+  Page  Valid  Frame  LoadedAtAccess
+  ----  -----  -----  --------------
+  0     1      0      1             
+
+Summary
+  Accesses             : 11
+  Page hits            : 5
+  Page faults          : 5
+  Frames used          : 1 of 1
+  Memory utilisation   : 100.0%
+
+Trade-off at this page size
+  Page-table entries   : 4   (smaller pages -> a bigger table)
+  Worst-case internal fragmentation per process: 1023 bytes
+  (the last page of a process is almost never completely full)
+
+Re-run with a different power of two to compare, e.g. ./paging 1024

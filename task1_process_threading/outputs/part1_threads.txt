@@ -1,4 +1,8 @@
-$ cd part1_threads && make run
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:34:55Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
 
 Main: creating 3 worker threads...
 [Thread 1] started  -> summing 1..1000

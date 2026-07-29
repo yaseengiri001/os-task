@@ -1,0 +1,55 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:00Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== User authentication ===
+Requirement 3.1(2)
+
+Design: passwords are never stored. Each account keeps a random
+salt and PBKDF2-HMAC-SHA256(password, salt, 200000 rounds).
+
+1. Registering accounts
+  REGISTER alice        OK
+           salt   7053866fe044fd2a8ac56b4a52b771c0
+           hash   89672852b6af94f98020bed599ae1b22...  (PBKDF2, 200000 rounds)
+  REGISTER bob          OK
+           salt   8e7f9585dcea1c982e49490aa434748b
+           hash   c6cd38cff956949aad6b37b57bc2f0fe...  (PBKDF2, 200000 rounds)
+  REGISTER charlie      OK
+           salt   c2cb561e3292b22b28ba57fb5331dcec
+           hash   76c11b6be97538a828fa1979c7993089...  (PBKDF2, 200000 rounds)
+  REGISTER dave         REFUSED: password shorter than 8 characters
+  REGISTER alice        FAILED: name taken
+
+2. Alice and Charlie chose the IDENTICAL password. Their stored
+   hashes must still differ, or the file would leak that fact:
+   alice   89672852b6af94f98020bed599ae1b2295a8d8a3...
+   charlie 76c11b6be97538a828fa1979c799308948f7c679...
+   -> different, as required: the unique salts did their job
+
+3. Correct credentials
+  LOGIN    alice        GRANTED
+  LOGIN    bob          GRANTED
+
+4. Wrong passwords, and the lockout that follows
+  LOGIN    bob          DENIED (invalid username or password) - attempt 1 of 3
+  LOGIN    bob          DENIED (invalid username or password) - attempt 2 of 3
+  LOGIN    bob          DENIED (invalid username or password) - account now LOCKED
+  LOGIN    bob          DENIED (account locked after 3 failed attempts)
+
+5. An account that does not exist gets the SAME message, so an
+   attacker cannot use the response to discover valid usernames:
+  LOGIN    eve          DENIED (invalid username or password)
+  LOGIN    root         DENIED (invalid username or password)
+
+6. Storing the account file
+  Saved 3 accounts to shadow.db (mode 0600, owner-only)
+
+Summary
+  Passwords are never written anywhere. Per-user salts make
+  precomputed rainbow tables useless and hide shared passwords.
+  200000 PBKDF2 rounds impose the same cost on every attacker guess.
+  Comparison is constant-time, failures are indistinguishable, and
+  repeated guessing locks the account.

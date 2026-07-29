@@ -1,4 +1,8 @@
-$ cd part3_round_robin && make run
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:34:57Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
 
 Round-robin scheduling  (time quantum = 2)
 

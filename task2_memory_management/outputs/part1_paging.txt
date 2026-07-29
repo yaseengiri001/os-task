@@ -1,0 +1,55 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:34:59Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== Paging system with a configurable page size ===
+
+Configuration
+  Page size            : 256 bytes (offset uses the low 8 bits)
+  Virtual memory       : 4096 bytes = 16 pages
+  Physical memory      : 1024 bytes = 4 frames
+  Page-table entries   : 16
+
+Address translation:  page = addr >> 8,  offset = addr & 0xFF
+
+Translating 11 virtual addresses
+---------------------------------------------------------------
+  addr 0     -> page 0   offset 0    | FAULT  loaded into frame 0   -> phys 0    
+    memory: [ p0  --  --  --  ]
+  addr 100   -> page 0   offset 100  | HIT   frame 0   -> phys 100  
+  addr 260   -> page 1   offset 4    | FAULT  loaded into frame 1   -> phys 260  
+    memory: [ p0  p1  --  --  ]
+  addr 1000  -> page 3   offset 232  | FAULT  loaded into frame 2   -> phys 744  
+    memory: [ p0  p1  p3  --  ]
+  addr 100   -> page 0   offset 100  | HIT   frame 0   -> phys 100  
+  addr 2500  -> page 9   offset 196  | FAULT  loaded into frame 3   -> phys 964  
+    memory: [ p0  p1  p3  p9  ]
+  addr 5000  -> INVALID (outside 0..4095)
+  addr 3000  -> page 11  offset 184  | FAULT  no free frame (replacement needed - see Parts 2 and 3)
+  addr 3500  -> page 13  offset 172  | FAULT  no free frame (replacement needed - see Parts 2 and 3)
+  addr 4000  -> page 15  offset 160  | FAULT  no free frame (replacement needed - see Parts 2 and 3)
+  addr 300   -> page 1   offset 44   | HIT   frame 1   -> phys 300  
+
+Page table (resident pages only)
+  Page  Valid  Frame  LoadedAtAccess
+  ----  -----  -----  --------------
+  0     1      0      1             
+  1     1      1      3             
+  3     1      2      4             
+  9     1      3      6             
+
+Summary
+  Accesses             : 11
+  Page hits            : 3
+  Page faults          : 7
+  Frames used          : 4 of 4
+  Memory utilisation   : 100.0%
+
+Trade-off at this page size
+  Page-table entries   : 16   (smaller pages -> a bigger table)
+  Worst-case internal fragmentation per process: 255 bytes
+  (the last page of a process is almost never completely full)
+
+Re-run with a different power of two to compare, e.g. ./paging 1024

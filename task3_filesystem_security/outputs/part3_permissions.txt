@@ -1,0 +1,110 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:02Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== File permission system ===
+Requirement 3.1(3)
+
+Users
+    alice    uid 1001, groups {2001 staff, 2002 admin}
+    bob      uid 1002, groups {2001 staff}
+    mallory  uid 1003, groups {2009 guests}
+
+Files
+    rw-r-----  0640  uid=1001 gid=2001  report.txt
+    rwxr-x---  0750  uid=1001 gid=2001  backup.sh
+    rw-r--r--  0644  uid=1001 gid=2001  public.txt
+    rw-------  0600  uid=1001 gid=2001  secret.key
+    r--rw-rw-  0466  uid=1001 gid=2001  odd.txt
+
+1. report.txt is 0640 (rw-r-----)
+    alice    wants to read    report.txt     -> ALLOWED
+             matched class 'owner' (rw-); only those bits are
+             consulted, because the first matching class wins
+    alice    wants to write   report.txt     -> ALLOWED
+             matched class 'owner' (rw-); only those bits are
+             consulted, because the first matching class wins
+    bob      wants to read    report.txt     -> ALLOWED
+             matched class 'group' (r--); only those bits are
+             consulted, because the first matching class wins
+    bob      wants to write   report.txt     -> DENIED
+             matched class 'group' (r--); only those bits are
+             consulted, because the first matching class wins
+    mallory  wants to read    report.txt     -> DENIED
+             matched class 'others' (---); only those bits are
+             consulted, because the first matching class wins
+
+2. backup.sh is 0750 (rwxr-x---) - execute is a separate right
+    alice    wants to execute backup.sh      -> ALLOWED
+             matched class 'owner' (rwx); only those bits are
+             consulted, because the first matching class wins
+    bob      wants to execute backup.sh      -> ALLOWED
+             matched class 'group' (r-x); only those bits are
+             consulted, because the first matching class wins
+    bob      wants to write   backup.sh      -> DENIED
+             matched class 'group' (r-x); only those bits are
+             consulted, because the first matching class wins
+    mallory  wants to execute backup.sh      -> DENIED
+             matched class 'others' (---); only those bits are
+             consulted, because the first matching class wins
+
+3. secret.key is 0600 (rw-------) - nobody but the owner
+    alice    wants to read    secret.key     -> ALLOWED
+             matched class 'owner' (rw-); only those bits are
+             consulted, because the first matching class wins
+    bob      wants to read    secret.key     -> DENIED
+             matched class 'group' (---); only those bits are
+             consulted, because the first matching class wins
+    mallory  wants to read    secret.key     -> DENIED
+             matched class 'others' (---); only those bits are
+             consulted, because the first matching class wins
+
+4. odd.txt is 0466 (r--rw-rw-) - the case that surprises people
+   The owner has only 'r', while group and others have 'rw'.
+
+    alice    wants to write   odd.txt        -> DENIED
+             matched class 'owner' (r--); only those bits are
+             consulted, because the first matching class wins
+    bob      wants to write   odd.txt        -> ALLOWED
+             matched class 'group' (rw-); only those bits are
+             consulted, because the first matching class wins
+    mallory  wants to write   odd.txt        -> ALLOWED
+             matched class 'others' (rw-); only those bits are
+             consulted, because the first matching class wins
+
+   Alice OWNS the file yet cannot write to it, while Mallory - who
+   has no relationship to it at all - can. Had the classes been
+   OR-ed together, Alice would have been allowed. They are not: the
+   owner class matched first and the check stopped there.
+   (Alice can still chmod it back, since changing a file's mode is
+   a property of ownership rather than of the permission bits.)
+
+5. chmod: the owner changes the mode, and access changes with it
+   Before: public.txt 0644 - mallory may read
+     mallory read -> ALLOWED
+   chmod 600 public.txt
+     mallory read -> DENIED
+
+6. The same rules on a REAL file, enforced by the kernel
+    created with 0644 -> kernel reports rw-r--r-- (0644)
+    chmod 0400        -> kernel reports r-------- (0400)
+    access(W_OK) now  -> NOT writable
+    open(O_WRONLY)    -> refused: Permission denied
+    (test file removed)
+
+7. On DIRECTORIES the same three bits mean something different
+    r  list the names inside
+    w  create, rename or delete entries - so deleting a file needs
+       write permission on its DIRECTORY, not on the file itself.
+       You can delete a file you are not allowed to read.
+    x  traverse the directory to reach what is inside
+    A directory with x but not r hides its listing while still
+    allowing a file whose name is already known to be opened.
+
+Summary
+  Nine bits across three classes, checked FIRST-MATCH-WINS rather
+  than combined - as odd.txt demonstrated. The model is coarse: it
+  cannot express 'alice and bob but nobody else' without creating a
+  group, which is what POSIX ACLs were added to solve.

@@ -1,0 +1,149 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:00Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== Page-fault statistics and algorithm comparison ===
+
+Four algorithms are compared on identical inputs:
+  FIFO   evict the oldest page                (Part 2)
+  LRU    evict the least recently used page   (Part 3)
+  CLOCK  second-chance; what real kernels use
+  OPT    evict the page used furthest in the future - not
+         implementable, but it is the theoretical lower bound
+
+Hit ratio  = hits   / references x 100
+Miss ratio = faults / references x 100   (miss = page fault)
+
+===============================================================
+WORKLOAD: Classic teaching string
+  The 12-reference string used in Parts 2 and 3.
+  Length: 12 references, 5 distinct pages
+===============================================================
+
+Page faults and hit/miss ratios by frame count
+
+Frames |        FIFO        |         LRU        |        CLOCK       |         OPT
+       |  flt   hit%  miss% |  flt   hit%  miss% |  flt   hit%  miss% |  flt   hit%  miss%
+-------+--------------------+--------------------+--------------------+--------------------
+  2    |   12    0.0  100.0 |   12    0.0  100.0 |   12    0.0  100.0 |    9   25.0   75.0
+  3    |    9   25.0   75.0 |   10   16.7   83.3 |    9   25.0   75.0 |    7   41.7   58.3
+  4    |   10   16.7   83.3 |    8   33.3   66.7 |   10   16.7   83.3 |    6   50.0   50.0
+  5    |    5   58.3   41.7 |    5   58.3   41.7 |    5   58.3   41.7 |    5   58.3   41.7
+  6    |    5   58.3   41.7 |    5   58.3   41.7 |    5   58.3   41.7 |    5   58.3   41.7
+
+Visualisation - page faults with 3 frames (shorter is better)
+
+  FIFO  [####################################    ] 9 faults
+  LRU   [########################################] 10 faults
+  CLOCK [####################################    ] 9 faults
+  OPT   [############################            ] 7 faults  (lower bound)
+
+  Reading of these results:
+    FIFO beat LRU here by 1 fault(s). Recency is only a heuristic,
+    and where it does not predict the future it can lose.
+    OPT needed 7 faults, so the very best any implementable policy
+    could have done was 3 fewer than LRU. CLOCK came within 1 fault(s)
+    of LRU using only one reference bit per frame, not a timestamp.
+
+===============================================================
+WORKLOAD: Working set + streaming (realistic)
+  A hot 3-page working set re-read constantly, while cold pages stream past once each.
+  Length: 100 references, 12 distinct pages
+===============================================================
+
+Page faults and hit/miss ratios by frame count
+
+Frames |        FIFO        |         LRU        |        CLOCK       |         OPT
+       |  flt   hit%  miss% |  flt   hit%  miss% |  flt   hit%  miss% |  flt   hit%  miss%
+-------+--------------------+--------------------+--------------------+--------------------
+  2    |   61   39.0   61.0 |   62   38.0   62.0 |   61   39.0   61.0 |   46   54.0   46.0
+  3    |   49   51.0   49.0 |   46   54.0   46.0 |   48   52.0   48.0 |   31   69.0   31.0
+  4    |   44   56.0   44.0 |   40   60.0   40.0 |   41   59.0   41.0 |   24   76.0   24.0
+  5    |   38   62.0   38.0 |   30   70.0   30.0 |   36   64.0   36.0 |   22   78.0   22.0
+  6    |   36   64.0   36.0 |   26   74.0   26.0 |   33   67.0   33.0 |   20   80.0   20.0
+
+Visualisation - page faults with 4 frames (shorter is better)
+
+  FIFO  [########################################] 44 faults
+  LRU   [####################################    ] 40 faults
+  CLOCK [#####################################   ] 41 faults
+  OPT   [#####################                   ] 24 faults  (lower bound)
+
+  Reading of these results:
+    LRU beat FIFO by 4 faults (9.1% fewer), because this
+    workload rewards keeping recently used pages resident.
+    OPT needed 24 faults, so the very best any implementable policy
+    could have done was 16 fewer than LRU. CLOCK came within 1 fault(s)
+    of LRU using only one reference bit per frame, not a timestamp.
+
+===============================================================
+WORKLOAD: Uniform random (worst case)
+  96 references spread evenly over 10 pages, with no locality to exploit.
+  Length: 96 references, 10 distinct pages
+===============================================================
+
+Page faults and hit/miss ratios by frame count
+
+Frames |        FIFO        |         LRU        |        CLOCK       |         OPT
+       |  flt   hit%  miss% |  flt   hit%  miss% |  flt   hit%  miss% |  flt   hit%  miss%
+-------+--------------------+--------------------+--------------------+--------------------
+  2    |   83   13.5   86.5 |   81   15.6   84.4 |   83   13.5   86.5 |   68   29.2   70.8
+  3    |   77   19.8   80.2 |   79   17.7   82.3 |   77   19.8   80.2 |   53   44.8   55.2
+  4    |   69   28.1   71.9 |   63   34.4   65.6 |   65   32.3   67.7 |   43   55.2   44.8
+  5    |   56   41.7   58.3 |   56   41.7   58.3 |   51   46.9   53.1 |   34   64.6   35.4
+  6    |   45   53.1   46.9 |   43   55.2   44.8 |   44   54.2   45.8 |   27   71.9   28.1
+
+Visualisation - page faults with 4 frames (shorter is better)
+
+  FIFO  [########################################] 69 faults
+  LRU   [####################################    ] 63 faults
+  CLOCK [#####################################   ] 65 faults
+  OPT   [########################                ] 43 faults  (lower bound)
+
+  Reading of these results:
+    LRU beat FIFO by 6 faults (8.7% fewer), because this
+    workload rewards keeping recently used pages resident.
+    OPT needed 43 faults, so the very best any implementable policy
+    could have done was 20 fewer than LRU. CLOCK came within 2 fault(s)
+    of LRU using only one reference bit per frame, not a timestamp.
+
+
+===============================================================
+OVERALL CONCLUSION
+===============================================================
+
+Summary of page faults at the frame count highlighted for each
+workload (lower is better):
+
+  Workload                              Frames  FIFO   LRU  CLOCK   OPT
+  ------------------------------------  ------  ----  ----  -----  ----
+  Classic teaching string               3          9    10      9     7
+  Working set + streaming (realistic)   4         44    40     41    24
+  Uniform random (worst case)           4         69    63     65    43
+
+Across the three workloads measured above, LRU beat FIFO 2 time(s),
+FIFO beat LRU 1 time(s), and they tied 0 time(s).
+
+What the measurements support:
+  - Neither policy is better in the abstract. Which one wins is a
+    property of the ACCESS PATTERN, not of the algorithm alone, so a
+    single reference string is never enough to judge them.
+  - LRU's advantage appears exactly where its assumption holds: when
+    a hot working set is re-read while other pages stream past, LRU
+    protects the working set and FIFO evicts it purely for being old.
+  - Where there is no locality to exploit, neither policy holds a
+    stable lead: on the random workload above they trade places as the
+    frame count changes, and every gap between them is small next to
+    the gap separating both from OPT. When the difference in fault
+    count is that marginal, FIFO's far lower bookkeeping cost is the
+    deciding factor rather than the fault count itself.
+  - Belady's anomaly (demonstrated in Part 2) is the one respect in
+    which FIFO is not merely weaker but unsound: extra memory can
+    increase its fault count. LRU is a stack algorithm and cannot.
+  - CLOCK stayed close to LRU throughout while doing almost no work
+    on a hit, which is why production kernels approximate LRU this
+    way instead of implementing it exactly.
+  - OPT is unimplementable, but it bounds the comparison: it shows how
+    much of the remaining gap was winnable at all.

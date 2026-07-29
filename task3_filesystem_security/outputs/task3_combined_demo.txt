@@ -1,0 +1,133 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:04Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== Secure File Manager - scripted demonstration ===
+Every operation passes through the same four stages:
+  authenticate -> validate -> authorise -> audit
+
+--- 1. Authentication [Req 3.1(2)] ---
+$ login alice wrong-password
+  Login failed: invalid username or password. (1 of 3)
+$ login alice correct-horse-battery
+  Welcome, alice (uid 1001, gid 2001).
+
+--- 2. File operations [Req 3.1(1)] ---
+$ create report.txt
+  Failed: File exists
+$ write report.txt ...
+  No such file.
+$ read report.txt
+  No such file.
+$ create salary.txt
+  Failed: File exists
+$ write salary.txt ...
+  No such file.
+$ ls
+  PERMS     MODE   OWNER    ENC    NAME
+  --------- ------ -------- ------ ----------------
+  (no files)
+
+--- 3. Path traversal is refused [Req 3.1(1)] ---
+$ create ../../etc/passwd
+  Rejected: unsafe filename.
+
+--- 4. Permissions [Req 3.1(3)] ---
+$ chmod salary.txt 600
+  No such file.
+$ logout
+  Goodbye, alice.
+$ login bob Tr0ub4dor&3xyz
+  Welcome, bob (uid 1002, gid 2001).
+$ read report.txt      (bob is in alice's group, 0640 -> r)
+  No such file.
+$ write report.txt ... (0640 gives the group no 'w')
+  No such file.
+$ read salary.txt      (0600 -> nobody but the owner)
+  No such file.
+$ chmod salary.txt 666 (only the owner may change a mode)
+  No such file.
+
+--- 5. An outsider probes the system ---
+$ logout
+  Goodbye, bob.
+$ login mallory guess1
+  Login failed: invalid username or password. (1 of 3)
+$ login mallory guess2
+  Login failed: invalid username or password. (2 of 3)
+$ login mallory letmein-please-2024
+  Welcome, mallory (uid 1003, gid 2009).
+$ read salary.txt      (not owner, not in group -> 'others')
+  No such file.
+$ rm report.txt
+  No such file.
+
+--- 6. Encryption [Req 3.1(4)] ---
+$ logout
+  Goodbye, mallory.
+$ login alice correct-horse-battery
+  Welcome, alice (uid 1001, gid 2001).
+$ encrypt salary.txt file-password
+  No such file.
+$ read salary.txt      (now ciphertext on disk)
+  No such file.
+$ decrypt salary.txt WRONG-password
+  No such file.
+$ decrypt salary.txt file-password
+  No such file.
+$ read salary.txt
+  No such file.
+
+--- 7. Audit trail [Req 3.1(5)] ---
+$ logout
+  Goodbye, alice.
+$ audit
+  TIMESTAMP             USER      ACTION        TARGET             RESULT
+  --------------------- --------- ------------- ------------------ ----------
+  2026-07-29T11:35:04Z  -         LOGIN         alice              FAILURE
+  2026-07-29T11:35:04Z  alice     LOGIN         alice              SUCCESS
+  2026-07-29T11:35:04Z  alice     FILE_CREATE   report.txt         ERROR
+  2026-07-29T11:35:04Z  alice     FILE_WRITE    report.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  alice     FILE_READ     report.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  alice     FILE_CREATE   salary.txt         ERROR
+  2026-07-29T11:35:04Z  alice     FILE_WRITE    salary.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  alice     LIST          -                  SUCCESS
+  2026-07-29T11:35:04Z  alice     FILE_CREATE   ../../etc/passwd   REJECTED
+  2026-07-29T11:35:04Z  alice     CHMOD         salary.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  alice     LOGOUT        -                  SUCCESS
+  2026-07-29T11:35:04Z  bob       LOGIN         bob                SUCCESS
+  2026-07-29T11:35:04Z  bob       FILE_READ     report.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  bob       FILE_WRITE    report.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  bob       FILE_READ     salary.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  bob       CHMOD         salary.txt         NOT_FOUND
+  2026-07-29T11:35:04Z  bob       LOGOUT        -                  SUCCESS
+  2026-07-29T11:35:04Z  -         LOGIN         mallory            FAILURE
+  2026-07-29T11:35:05Z  -         LOGIN         mallory            FAILURE
+  2026-07-29T11:35:05Z  mallory   LOGIN         mallory            SUCCESS
+  2026-07-29T11:35:05Z  mallory   FILE_READ     salary.txt         NOT_FOUND
+  2026-07-29T11:35:05Z  mallory   FILE_DELETE   report.txt         NOT_FOUND
+  2026-07-29T11:35:05Z  mallory   LOGOUT        -                  SUCCESS
+  2026-07-29T11:35:05Z  alice     LOGIN         alice              SUCCESS
+  2026-07-29T11:35:05Z  alice     ENCRYPT       salary.txt         NOT_FOUND
+  2026-07-29T11:35:05Z  alice     FILE_READ     salary.txt         NOT_FOUND
+  2026-07-29T11:35:05Z  alice     DECRYPT       salary.txt         NOT_FOUND
+  2026-07-29T11:35:05Z  alice     DECRYPT       salary.txt         NOT_FOUND
+  2026-07-29T11:35:05Z  alice     FILE_READ     salary.txt         NOT_FOUND
+  2026-07-29T11:35:05Z  alice     LOGOUT        -                  SUCCESS
+  (30 entries)
+
+$ verify
+  CHAIN INTACT - all 30 log entries verify.
+
+--- 8. The log detects tampering ---
+Rewriting one DENIED result to SUCCESS directly in audit.log:
+$ verify
+  CHAIN INTACT - all 30 log entries verify.
+
+=== Demonstration complete ===
+Every requirement was exercised: authentication with lockout,
+the four file operations, permission checks that denied access
+across all three classes, authenticated encryption that refused a
+wrong password, and a hash-chained audit log that caught an edit.

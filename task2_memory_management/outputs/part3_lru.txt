@@ -1,0 +1,54 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:00Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+=== LRU (Least Recently Used) page replacement ===
+
+Policy: evict the page that has gone UNUSED for the longest time,
+        on the assumption that recent use predicts future use.
+
+Reference string (12 references):
+  1 2 3 4 1 2 5 1 2 3 4 5 
+
+Simulation with 3 frames  ('.' = empty frame)
+
+Ref |  F0  F1  F2  | Result   Detail
+----+--------------+------------------------------
+  1 |   1   .   .  | FAULT    (free frame 0)
+  2 |   1   2   .  | FAULT    (free frame 1)
+  3 |   1   2   3  | FAULT    (free frame 2)
+  4 |   4   2   3  | FAULT    evicted page 1 (least recently used)
+  1 |   4   1   3  | FAULT    evicted page 2 (least recently used)
+  2 |   4   1   2  | FAULT    evicted page 3 (least recently used)
+  5 |   5   1   2  | FAULT    evicted page 4 (least recently used)
+  1 |   5   1   2  | HIT      refreshed frame 1
+  2 |   5   1   2  | HIT      refreshed frame 2
+  3 |   3   1   2  | FAULT    evicted page 5 (least recently used)
+  4 |   3   4   2  | FAULT    evicted page 1 (least recently used)
+  5 |   3   4   5  | FAULT    evicted page 2 (least recently used)
+
+Results for LRU with 3 frames
+  References  : 12
+  Page hits   : 2
+  Page faults : 10
+  Hit ratio   : 16.67%
+  Miss ratio  : 83.33%
+
+
+=== Stack property check (the anomaly FIFO showed) ===
+For LRU, adding a frame must never increase the fault count.
+
+  Frames  Page faults
+  ------  -----------
+  1       12         
+  2       12           (no change)
+  3       10           (improved)
+  4       8            (improved)
+  5       5            (improved)
+
+No anomaly, as theory predicts. LRU is a stack algorithm: the
+pages resident with N frames are always a subset of those
+resident with N+1 frames, so extra memory can only ever help.
+On this same reference string FIFO (Part 2) DID show the anomaly.

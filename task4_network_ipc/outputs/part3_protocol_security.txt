@@ -1,0 +1,197 @@
+# Captured by tools/capture_outputs.sh
+# Date    : 2026-07-29T11:35:09Z (UTC)
+# Host OS : Darwin 25.5.0 arm64
+# Compiler: Apple clang version 21.0.0 (clang-2100.0.123.102)
+#
+
+[server] protocol server listening on port 9403
+[server] challenge-response auth; passwords never cross the wire
+[server] serving up to 4 connection(s)
+
+=== Protocol and security test harness ===
+Target: 127.0.0.1:9403
+
+--- Session 1: correct usage ---
+[server] conn 1 from 127.0.0.1:59003
+    <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
+
+  [1] HELP is available before authenticating
+    -> HELP
+
+[server] conn 1 >> HELP
+    <- 200 OK commands: HELP AUTH RESPONSE ECHO TIME WHOAMI QUIT
+    PASS  HELP works unauthenticated
+
+  [2] A privileged command BEFORE authenticating must be refused
+    -> TIME
+
+[server] conn 1 >> TIME
+    <- 401 UNAUTHORISED authenticate first
+    PASS  TIME refused without authentication
+
+  [3] RESPONSE without a preceding AUTH must be refused
+    -> RESPONSE 0000000000000000000000000000000000000000000000000000000000000 ...(truncated in this log)
+[server] conn 1 >> RESPONSE 000000000000000000000000000000000000000000000000000
+    <- 400 BAD REQUEST send AUTH <username> first
+    PASS  RESPONSE rejected out of sequence
+
+  [4] Challenge-response authentication with the correct password
+    -> AUTH alice
+
+[server] conn 1 >> AUTH alice
+    <- 331 CHALLENGE 6956f53a79d06aacf20e4e242700b74c
+    -> RESPONSE 7788ff96a30fd52c65e4d9617ef09076146af059c549ec81043e5cbfb6410 ...(truncated in this log)
+[server] conn 1 >> RESPONSE 7788ff96a30fd52c65e4d9617ef09076146af059c549ec81043
+[server] conn 1 authenticated as alice
+    <- 200 OK authenticated as alice
+    PASS  authenticated as alice
+
+  [5] Privileged commands now work
+    -> WHOAMI
+
+[server] conn 1 >> WHOAMI
+    <- 200 OK alice
+    PASS  WHOAMI after authentication
+
+    -> TIME
+
+[server] conn 1 >> TIME
+    <- 200 OK 2026-07-29T11:35:10Z
+    PASS  TIME after authentication
+
+    -> ECHO hello protocol world
+
+[server] conn 1 >> ECHO hello protocol world
+    <- 200 OK hello protocol world
+    PASS  ECHO with a valid payload
+
+  [6] An unknown command is refused, not ignored
+    -> DROPTABLE users
+
+[server] conn 1 >> DROPTABLE users
+    <- 400 BAD REQUEST unknown command
+    PASS  unknown command rejected
+
+  [7] A payload containing a control character is refused
+    -> ECHO badpayload
+
+[server] conn 1 >> ECHO badpayload
+    <- 400 BAD REQUEST payload must be 1-256 printable chars
+    PASS  control characters rejected
+
+  [8] A payload longer than the 256-character limit is refused
+    -> ECHO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ...(truncated in this log)
+[server] conn 1 >> ECHO AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    <- 400 BAD REQUEST payload must be 1-256 printable chars
+    PASS  over-long payload rejected
+
+    -> QUIT
+
+[server] conn 1 >> QUIT
+[server] conn 1 quit
+    <- 200 BYE
+    PASS  clean QUIT
+
+--- Session 2: authentication failures and rate limiting ---
+[server] conn 1 finished (12 requests)
+[server] conn 2 from 127.0.0.1:59004
+    <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
+
+  [9] A malformed username is refused before any work is done
+    -> AUTH ../../etc/passwd
+
+[server] conn 2 >> AUTH ../../etc/passwd
+    <- 400 BAD REQUEST invalid username format
+    PASS  invalid username format rejected
+
+  [10] A response of the wrong shape is refused
+    -> AUTH alice
+
+[server] conn 2 >> AUTH alice
+    <- 331 CHALLENGE b3f6e03991c0246eeeea7bfab6b9fe63
+    -> RESPONSE nothex
+
+[server] conn 2 >> RESPONSE nothex
+    <- 400 BAD REQUEST expected 64 hex characters
+    PASS  malformed digest rejected
+
+  [11] Three wrong passwords: 401, 401, then 429 and disconnect
+    -> AUTH alice
+
+[server] conn 2 >> AUTH alice
+    <- 331 CHALLENGE 4a8e8f30a8763ad6ca5de6d9acc8fe2d
+    -> RESPONSE b6b9da109ef5589f934758d3d2839ba194f38d8786a704aadf19c6e6d054b ...(truncated in this log)
+[server] conn 2 >> RESPONSE b6b9da109ef5589f934758d3d2839ba194f38d8786a704aadf1
+    <- 401 UNAUTHORISED invalid credentials (1 of 3)
+    PASS  wrong password rejected
+
+    -> AUTH alice
+
+[server] conn 2 >> AUTH alice
+    <- 331 CHALLENGE 3b0af2ec9e8f3bebdc30dc9c4a3ec8a9
+    -> RESPONSE a778ce104a609304b7ce870e5770413e049057c487ec7f6ee7ed8821d7809 ...(truncated in this log)
+[server] conn 2 >> RESPONSE a778ce104a609304b7ce870e5770413e049057c487ec7f6ee7e
+    <- 401 UNAUTHORISED invalid credentials (2 of 3)
+    PASS  wrong password rejected
+
+    -> AUTH alice
+
+[server] conn 2 >> AUTH alice
+    <- 331 CHALLENGE daa4c6894dc6bdc6edcd9b73361a16c6
+    -> RESPONSE 41f4aa95ef91f253554018a235a6b70d6c12cfdcf8302f30f011ecbeebed0 ...(truncated in this log)
+[server] conn 2 >> RESPONSE 41f4aa95ef91f253554018a235a6b70d6c12cfdcf8302f30f01
+[server] conn 2 dropped after 3 auth failures
+    <- 429 TOO MANY failed attempts - closing
+    PASS  rate limit reached after 3 failures
+
+--- Session 3: an unknown account is indistinguishable ---
+[server] conn 2 finished (9 requests)
+[server] conn 3 from 127.0.0.1:59005
+    <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
+
+  [12] AUTH for an account that does not exist still gets a
+       challenge, so the reply reveals nothing about who is real
+    -> AUTH nosuchuser
+
+[server] conn 3 >> AUTH nosuchuser
+    <- 331 CHALLENGE 2a22f169dbc375b7b22534043312404b
+    PASS  challenge issued for an unknown account
+
+    -> RESPONSE 0000000000000000000000000000000000000000000000000000000000000 ...(truncated in this log)
+[server] conn 3 >> RESPONSE 000000000000000000000000000000000000000000000000000
+    <- 401 UNAUTHORISED invalid credentials (1 of 3)
+    PASS  failure message identical to a wrong password
+
+    -> QUIT
+
+[server] conn 3 >> QUIT
+[server] conn 3 quit
+    <- 200 BYE
+    PASS  clean QUIT
+
+--- Session 4: a line with no terminator at all ---
+  A client that streams bytes without ever sending \n would make
+  an unbounded server buffer grow until memory ran out. The server
+  caps the line length instead, so the attack costs it nothing.
+[server] conn 3 finished (3 requests)
+
+[server] conn 4 from 127.0.0.1:59006
+    <- 200 READY ST5004CEM protocol v1 - send AUTH <user> or HELP
+
+  [13] 8 KB with no newline: refused and the connection dropped
+    -> ECHO followed by 8192 bytes and NO newline
+[server] conn 4 sent an oversized line
+    <- 400 BAD REQUEST line too long
+    PASS  unterminated flood refused
+
+=== Test summary ===
+  20 of 20 checks passed
+  ALL TESTS PASSED - the server accepted every valid request
+  and refused every invalid one with the correct status code.
+[server] conn 4 finished (0 requests)
+
+[server] shutting down
+[server] connections     : 4
+[server] auth successes  : 1
+[server] auth failures   : 4
+[server] bad requests    : 6
